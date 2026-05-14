@@ -1,0 +1,16 @@
+{
+  "name": "@claude-code-provider-gateway/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare-sidecar": "node src-tauri/scripts/prepare-sidecar.mjs",
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "build": "node src-tauri/scripts/build-desktop.mjs",
+    "build:appimage": "node src-tauri/scripts/build-appimage.mjs"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}

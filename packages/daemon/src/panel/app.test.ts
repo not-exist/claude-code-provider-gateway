@@ -1,0 +1,162 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { buildDefaultConfig } from '../config/index.js'
+import { createPanelApp } from './app.js'
+
+test('panel API rejects browser requests from untrusted origins', async () => {
+  const config = buildDefaultConfig()
+  config.server.authToken = 'secret'
+  const app = createPanelApp(config)
+
+  const response = await app.request('/api/launch-commands', {
+    headers: {
+      Origin: 'https://example.invalid',
+      'Sec-Fetch-Site': 'cross-site',
+    },
+  })
+
+  assert.equal(response.status, 403)
+  assert.deepEqual(await response.json(), { error: 'Forbidden origin' })
+})
+
+test('panel API allows trusted Tauri origins in production', async () => {
+  const previous = process.env['NODE_ENV']
+  process.env['NODE_ENV'] = 'production'
+  try {
+    const config = buildDefaultConfig()
+    config.server.authToken = 'secret'
+    const app = createPanelApp(config)
+
+    const response = await app.request('/api/status', {
+      headers: { Origin: 'https://tauri.localhost' },
+    })
+
+    assert.equal(response.status, 200)
+    assert.equal(response.headers.get('Access-Control-Allow-Origin'), 'https://tauri.localhost')
+  } finally {
+    if (previous === undefined) delete process.env['NODE_ENV']
+    else process.env['NODE_ENV'] = previous
+  }
+})
+
+test('panel API allows vite dev origin only outside production', async () => {
+  const previous = process.env['NODE_ENV']
+  delete process.env['NODE_ENV']
+  try {
+    const config = buildDefaultConfig()
+    config.server.authToken = 'secret'
+    const app = createPanelApp(config)
+
+    const response = await app.request('/api/status', {
+      headers: { Origin: 'http://localhost:5173' },
+    })
+
+    assert.equal(response.status, 200)
+    assert.equal(response.headers.get('Access-Control-Allow-Origin'), 'http://localhost:5173')
+  } finally {
+    if (previous === undefined) delete process.env['NODE_ENV']
+    else process.env['NODE_ENV'] = previous
+  }
+})
+
+test('panel API rejects vite dev origin in production', async () => {
+  const previous = process.env['NODE_ENV']
+  process.env['NODE_ENV'] = 'production'
+  try {
+    const config = buildDefaultConfig()
+    config.server.authToken = 'secret'
+    const app = createPanelApp(config)
+
+    const response = await app.request('/api/status', {
+      headers: { Origin: 'http://localhost:5173' },
+    })
+
+    assert.equal(response.status, 403)
+  } finally {
+    if (previous === undefined) delete process.env['NODE_ENV']
+    else process.env['NODE_ENV'] = previous
+  }
+})
+
+test('panel API accepts gateway token as explicit local bypass', async () => {
+  const config = buildDefaultConfig()
+  config.server.authToken = 'secret'
+  const app = createPanelApp(config)
+
+  const response = await app.request('/api/status', {
+    headers: {
+      Origin: 'https://example.invalid',
+      Authorization: 'Bearer secret',
+    },
+  })
+
+  assert.equal(response.status, 200)
+})
+
+test('panel API keeps local curl-style reads working without Origin', async () => {
+  const config = buildDefaultConfig()
+  config.server.authToken = 'secret'
+  const app = createPanelApp(config)
+
+  const response = await app.request('/api/status')
+
+  assert.equal(response.status, 200)
+  const body = await response.json() as { proxyPort?: number }
+  assert.equal(body.proxyPort, config.server.proxyPort)
+})
+
+test('panel API requires token for sensitive local requests without Origin', async () => {
+  const config = buildDefaultConfig()
+  config.server.authToken = 'secret'
+  const app = createPanelApp(config)
+
+  const response = await app.request('/api/launch-commands')
+
+  assert.equal(response.status, 401)
+  assert.deepEqual(await response.json(), { error: 'Authentication required' })
+})
+
+test('panel API allows sensitive local requests with gateway token', async () => {
+  const config = buildDefaultConfig()
+  config.server.authToken = 'secret'
+  const app = createPanelApp(config)
+
+  const response = await app.request('/api/launch-commands', {
+    headers: { Authorization: 'Bearer secret' },
+  })
+
+  assert.equal(response.status, 200)
+  const body = await response.json() as { manual?: string }
+  assert.ok(body.manual?.includes('ANTHROPIC_AUTH_TOKEN=secret'))
+})
+
+test('panel API rejects sensitive local requests with wrong gateway token', async () => {
+  const config = buildDefaultConfig()
+  config.server.authToken = 'secret'
+  const app = createPanelApp(config)
+
+  const response = await app.request('/api/control/shutdown', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer wrong' },
+  })
+
+  assert.equal(response.status, 401)
+})
+
+test('panel API rejects unknown shell names before installing snippets', async () => {
+  const config = buildDefaultConfig()
+  config.server.authToken = 'secret'
+  const app = createPanelApp(config)
+
+  const response = await app.request('/api/shell-setup/install', {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer secret',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ shells: ['zsh', '../bad'] }),
+  })
+
+  assert.equal(response.status, 400)
+  assert.deepEqual(await response.json(), { error: 'Unknown shell: ../bad' })
+})

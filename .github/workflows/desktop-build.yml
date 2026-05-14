@@ -1,0 +1,266 @@
+name: Desktop Build
+
+on:
+  push:
+    tags:
+      - "v*"
+  pull_request:
+    paths:
+      - "packages/daemon/**"
+      - "packages/panel/**"
+      - "packages/desktop/**"
+      - ".github/workflows/desktop-build.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build:
+    name: ${{ matrix.label }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # ── macOS ──────────────────────────────────────────────────────────
+          - label: macOS (Apple Silicon)
+            platform-label: Mac Silicon
+            os: macos-latest
+            rust-target: aarch64-apple-darwin
+            bundle-path: target/aarch64-apple-darwin/release/bundle
+            linux: false
+            daemon-compile: darwin-arm64
+            daemon-bin-src: claude-code-provider-gateway-daemon-darwin-arm64
+
+          # Cross-compiled from Apple Silicon runner (macos-13 Intel runners are EOL)
+          - label: macOS (Intel)
+            platform-label: Mac Intel
+            os: macos-latest
+            rust-target: x86_64-apple-darwin
+            bundle-path: target/x86_64-apple-darwin/release/bundle
+            linux: false
+            daemon-compile: darwin-x64
+            daemon-bin-src: claude-code-provider-gateway-daemon-darwin-x64
+
+          # ── Linux ──────────────────────────────────────────────────────────
+          # Uses a custom build script to produce deb + rpm + AppImage
+          # (tauri-action is bypassed because of a linuxdeploy/sidecar patching
+          # issue; see packages/desktop/src-tauri/scripts/build-appimage.mjs)
+          - label: Linux x86_64
+            platform-label: Lin x64
+            os: ubuntu-22.04
+            rust-target: x86_64-unknown-linux-gnu
+            bundle-path: target/release/bundle
+            linux: true
+            daemon-compile: linux-x64
+            daemon-bin-src: claude-code-provider-gateway-daemon-linux-x64
+
+          - label: Linux ARM64
+            platform-label: Lin ARM64
+            os: ubuntu-22.04-arm
+            rust-target: aarch64-unknown-linux-gnu
+            bundle-path: target/release/bundle
+            linux: true
+            daemon-compile: linux-arm64
+            daemon-bin-src: claude-code-provider-gateway-daemon-linux-arm64
+
+          # ── Windows ────────────────────────────────────────────────────────
+          - label: Windows x86_64
+            platform-label: Win
+            os: windows-latest
+            rust-target: x86_64-pc-windows-msvc
+            bundle-path: target/x86_64-pc-windows-msvc/release/bundle
+            linux: false
+            daemon-compile: win-x64
+            daemon-bin-src: claude-code-provider-gateway-daemon-win-x64.exe
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust-target }}
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: packages/desktop/src-tauri
+          key: ${{ matrix.rust-target }}
+
+      - name: Install Linux system dependencies
+        if: matrix.linux
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libsoup-3.0-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      - name: Install workspace dependencies
+        run: npm ci
+
+      - name: Build daemon sidecar
+        shell: bash
+        run: |
+          npm run compile:${{ matrix.daemon-compile }} -w @claude-code-provider-gateway/daemon
+          mkdir -p packages/desktop/src-tauri/binaries
+          EXT="${{ matrix.rust-target == 'x86_64-pc-windows-msvc' && '.exe' || '' }}"
+          cp packages/daemon/dist-bin/${{ matrix.daemon-bin-src }} \
+             packages/desktop/src-tauri/binaries/claude-code-provider-gateway-daemon-${{ matrix.rust-target }}${EXT}
+
+      # ── Linux build ────────────────────────────────────────────────────────
+      # Runs build-desktop.mjs which handles:
+      #   1. tauri build --bundles deb,rpm
+      #   2. AppImage via build-appimage.mjs (recovers from linuxdeploy sidecar patching)
+      - name: Build (Linux — deb + rpm + AppImage)
+        if: matrix.linux
+        run: npm run build -w @claude-code-provider-gateway/desktop
+
+      # ── macOS / Windows build ─────────────────────────────────────────────
+      # tagName/releaseName intentionally omitted — artifacts are renamed and
+      # uploaded manually in the steps below so platform labels can be added.
+      - uses: tauri-apps/tauri-action@v0.6.2
+        if: "!matrix.linux"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CC_GATEWAY_TAURI_TARGET: ${{ matrix.rust-target }}
+        with:
+          projectPath: packages/desktop
+          tauriScript: npx tauri
+          args: --target ${{ matrix.rust-target }}
+
+      # ── Add platform label to artifact file names ─────────────────────────
+      - name: Rename macOS artifacts
+        if: matrix.os == 'macos-latest'
+        shell: bash
+        run: |
+          LABEL="${{ matrix.platform-label }}"
+          BUNDLE="packages/desktop/src-tauri/${{ matrix.bundle-path }}"
+          for f in "$BUNDLE"/dmg/*.dmg; do
+            [ -f "$f" ] || continue
+            mv "$f" "${f%.dmg} (${LABEL}).dmg"
+          done
+
+      - name: Rename Windows installer artifacts
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $label  = "${{ matrix.platform-label }}"
+          $bundle = "packages/desktop/src-tauri/${{ matrix.bundle-path }}"
+          Get-ChildItem "$bundle/msi" -Filter "*.msi" -ErrorAction SilentlyContinue | ForEach-Object {
+            Rename-Item $_.FullName ($_.FullName -replace '\.msi$', " ($label).msi")
+          }
+          Get-ChildItem "$bundle/nsis" -Filter "*.exe" -ErrorAction SilentlyContinue | ForEach-Object {
+            Rename-Item $_.FullName ($_.FullName -replace '\.exe$', " ($label).exe")
+          }
+
+      - name: Rename Linux artifacts
+        if: matrix.linux
+        shell: bash
+        run: |
+          LABEL="${{ matrix.platform-label }}"
+          BUNDLE="packages/desktop/src-tauri/${{ matrix.bundle-path }}"
+          for f in "$BUNDLE"/deb/*.deb "$BUNDLE"/rpm/*.rpm "$BUNDLE"/appimage/*.AppImage; do
+            [ -f "$f" ] || continue
+            ext="${f##*.}"
+            mv "$f" "${f%.$ext} (${LABEL}).$ext"
+          done
+
+      # ── Windows portable zip ───────────────────────────────────────────────
+      # Bundles the Tauri shell exe + daemon sidecar into a single zip so users
+      # can run without installing. WebView2 must already be installed on the
+      # system (ships with Windows 10/11 via Windows Update).
+      - name: Create Windows portable zip
+        if: matrix.os == 'windows-latest'
+        id: portable
+        shell: pwsh
+        run: |
+          $releaseDir  = "packages/desktop/src-tauri/target/${{ matrix.rust-target }}/release"
+          $binariesDir = "packages/desktop/src-tauri/binaries"
+          $mainExe     = "$releaseDir/claude-code-provider-gateway-desktop.exe"
+          $sidecarExe  = "$binariesDir/claude-code-provider-gateway-daemon-${{ matrix.rust-target }}.exe"
+          $version     = (Get-Content "packages/desktop/src-tauri/tauri.conf.json" | ConvertFrom-Json).version
+          $label       = "${{ matrix.platform-label }}"
+          $zipName     = "claude-code-provider-gateway_${version}_x64_portable (${label}).zip"
+
+          if ((Test-Path $mainExe) -and (Test-Path $sidecarExe)) {
+            Compress-Archive -Path @($mainExe, $sidecarExe) -DestinationPath $zipName
+            echo "zip=$zipName" >> $env:GITHUB_OUTPUT
+            echo "created=true"  >> $env:GITHUB_OUTPUT
+          } else {
+            echo "created=false" >> $env:GITHUB_OUTPUT
+            Write-Warning "Skipping portable zip — exe or sidecar not found"
+          }
+
+      # ── Upload to release on tag push ─────────────────────────────────────
+      - name: Upload macOS artifacts to release
+        if: matrix.os == 'macos-latest' && startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          name: CC Provider Gateway ${{ github.ref_name }}
+          files: |
+            packages/desktop/src-tauri/${{ matrix.bundle-path }}/dmg/*.dmg
+
+      - name: Upload Windows installers to release
+        if: matrix.os == 'windows-latest' && startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          name: CC Provider Gateway ${{ github.ref_name }}
+          files: |
+            packages/desktop/src-tauri/${{ matrix.bundle-path }}/msi/*.msi
+            packages/desktop/src-tauri/${{ matrix.bundle-path }}/nsis/*.exe
+
+      - name: Upload Windows portable to release
+        if: >
+          matrix.os == 'windows-latest' &&
+          steps.portable.outputs.created == 'true' &&
+          startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: ${{ steps.portable.outputs.zip }}
+
+      - name: Upload Linux artifacts to release
+        if: matrix.linux && startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          name: CC Provider Gateway ${{ github.ref_name }}
+          files: |
+            packages/desktop/src-tauri/${{ matrix.bundle-path }}/deb/*.deb
+            packages/desktop/src-tauri/${{ matrix.bundle-path }}/rpm/*.rpm
+            packages/desktop/src-tauri/${{ matrix.bundle-path }}/appimage/*.AppImage
+
+      # ── Upload all artifacts for non-release (PR / workflow_dispatch) runs ─
+      - name: Upload installers as workflow artifact
+        if: "!startsWith(github.ref, 'refs/tags/v')"
+        uses: actions/upload-artifact@v4
+        with:
+          name: installers-${{ matrix.rust-target }}
+          path: |
+            packages/desktop/src-tauri/${{ matrix.bundle-path }}/**/*.dmg
+            packages/desktop/src-tauri/${{ matrix.bundle-path }}/**/*.pkg
+            packages/desktop/src-tauri/${{ matrix.bundle-path }}/**/*.msi
+            packages/desktop/src-tauri/${{ matrix.bundle-path }}/**/*.exe
+            packages/desktop/src-tauri/${{ matrix.bundle-path }}/**/*.AppImage
+            packages/desktop/src-tauri/${{ matrix.bundle-path }}/**/*.deb
+            packages/desktop/src-tauri/${{ matrix.bundle-path }}/**/*.rpm
+          if-no-files-found: warn

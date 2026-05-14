@@ -1,0 +1,528 @@
+# Architecture
+
+> A technical deep-dive into Claude Code Provider Gateway's design, layers, and data flow.
+
+## Overview
+
+Claude Code Provider Gateway is a desktop-first local gateway. The Tauri desktop app starts and supervises a bundled daemon sidecar. That daemon:
+
+1. Listens for Anthropic Messages API requests from Claude Code
+2. Routes them to the correct LLM provider based on configuration
+3. Translates the request to the provider's native format
+4. Streams the response back as Anthropic-compatible SSE
+5. Records local session history for the desktop UI
+
+The React management panel is served by the daemon and shown inside the Tauri webview. Development mode can run the daemon and panel separately for faster iteration, but the production product is the desktop app.
+
+## High-Level Architecture
+
+```
+┌────────────────┐     ┌───────────────────────────────────┐     ┌─────────────────┐
+│  Claude Code   │     │         Gateway Daemon            │     │  OpenRouter     │
+│  (CLI / IDE)   │────▶│  ┌─────────────────────────────┐  │────▶│  DeepSeek       │
+│                │◀────│  │ Hono HTTP Server (proxy)    │  │◀────│  OpenAI         │
+│  Anthropic     │ SSE │  │ :49250                      │  │     │  Ollama         │
+│  Messages API  │     │  └─────────────────────────────┘  │     │  ...            │
+└────────────────┘     │  ┌─────────────────────────────┐  │     └─────────────────┘
+                       │  │ Hono HTTP Server (panel)    │  │
+   Tauri Webview ─────▶│  │ :6767                       │  │
+                       │  │ REST API + React SPA files  │  │
+                       │  └─────────────────────────────┘  │
+                       │  ┌─────────────────────────────┐  │
+                       │  │ Filesystem                  │  │
+                       │  │ Config · Secrets · Sessions │  │
+                       │  └─────────────────────────────┘  │
+                       └───────────────────────────────────┘
+```
+
+## Directory Structure
+
+```
+claude-code-provider-gateway/
+├── packages/
+│   ├── daemon/src/                       # Core proxy daemon
+│   │   ├── index.ts                      # Entry point: load config → start daemon
+│   │   ├── config/                       # Config system + encrypted secrets
+│   │   │   ├── paths.ts                  # Centralized filesystem path helpers
+│   │   │   ├── schema.ts                 # TypeScript types, provider defaults, CLI flags
+│   │   │   ├── validation.ts             # Runtime normalization + default merging
+│   │   │   └── secrets/                  # AES-256-GCM secret store
+│   │   ├── proxy/                        # Proxy server (Hono)
+│   │   │   ├── app.ts                    # Hono app, middleware chain, route registration
+│   │   │   ├── runtime.ts               # Proxy runtime + config loader
+│   │   │   ├── model-router.ts          # Model → provider routing
+│   │   │   ├── middleware/auth.ts        # x-api-key authentication (proxy)
+│   │   │   ├── routes/                   # Anthropic + status route handlers
+│   │   │   ├── services/                 # Message orchestration + supporting services
+│   │   │   │   ├── message-service.ts    # Core orchestration
+│   │   │   │   ├── native-claude-routing.ts  # Passthrough routing logic
+│   │   │   │   ├── prompt-serializer.ts  # Request → human-readable text for session log
+│   │   │   │   └── stream-result.ts      # Stream wrapping + response capture helpers
+│   │   │   └── providers/               # LLM provider implementations
+│   │   │       ├── copilot.ts            # GitHub Copilot (dual-transport)
+│   │   │       ├── copilot-chat-stream.ts  # OpenAI Chat stream → Anthropic SSE
+│   │   │       ├── copilot-native-anthropic.ts  # Native Anthropic protocol for claude-* models
+│   │   │       ├── model-prefix.ts       # Gateway provider prefix stripping
+│   │   │       ├── openai-account.ts     # OpenAI Account provider
+│   │   │       ├── openai-account-responses.ts  # Responses API request builder
+│   │   │       ├── openai-account-stream.ts     # Responses API stream transformer
+│   │   │       └── ...                   # Other providers (10 total)
+│   │   ├── runtime/                      # Daemon lifecycle, sessions, stats
+│   │   │   ├── sessions.ts               # Session orchestration (start, end, heartbeat)
+│   │   │   ├── session-types.ts          # SessionRecord, SessionModelStat, etc.
+│   │   │   ├── session-stats.ts          # Pure stat computation functions
+│   │   │   └── session-store.ts          # Disk persistence (read/write/archive)
+│   │   ├── core/                         # Anthropic types, token counting, format conversion
+│   │   └── panel/                        # Panel HTTP server
+│   │       ├── app.ts                    # Hono app composition (thin coordinator)
+│   │       ├── contracts.ts              # Shared TypeScript types for all panel API shapes
+│   │       ├── runtime.ts                # PanelRuntime: config, registry, OAuth flow state
+│   │       ├── middleware/auth.ts         # Panel access control (origin + token)
+│   │       └── routes/                   # One file per route group
+│   │           ├── config-routes.ts      # GET/PUT /api/config
+│   │           ├── oauth-routes.ts       # OpenAI Account + Copilot OAuth flows
+│   │           ├── provider-routes.ts    # Provider list, test, models, routing options
+│   │           ├── session-routes.ts     # Session read, clear, launch lifecycle
+│   │           ├── shell-routes.ts       # Shell setup, snippets, launch commands
+│   │           ├── static-routes.ts      # React SPA static file serving
+│   │           └── status-routes.ts      # Status, stats, shutdown, SSE log stream
+│   ├── panel/src/                        # React SPA (Vite + Ant Design)
+│   └── desktop/src-tauri/               # Tauri v2 desktop shell (Rust)
+```
+
+## System Layers
+
+### 1. Daemon Runtime (`packages/daemon/src/runtime/daemon.ts`)
+
+Manages two HTTP servers using `@hono/node-server`:
+
+```typescript
+class DaemonRuntime {
+  start(): void {
+    // Binds proxy (:49250) and panel (:6767) servers
+    // Both listen on 127.0.0.1 only
+    // Handles SIGINT/SIGTERM → graceful shutdown
+    // Writes PID file on ready
+  }
+}
+```
+
+Both servers bind to `127.0.0.1` only. This keeps the gateway off the network, but it does not remove the need for local request authentication.
+
+### 2. Proxy Layer (`packages/daemon/src/proxy/`)
+
+Built with [Hono](https://hono.dev), a lightweight web framework.
+
+**app.ts** — creates the Hono app with:
+- Middleware: config reload on every request (`runtime.reloadConfig()`), then auth validation
+- Route registration: `registerStatusRoutes()` + `registerAnthropicRoutes()`
+
+**routes/anthropic-routes.ts** — handles `POST /v1/messages`:
+
+Two model catalog modes are controlled by `config.modelMode`:
+
+| Mode | How routing works |
+|---|---|
+| `single` | All requests go to `config.activeProvider`. Models list only shows that provider's models. |
+| `all` | Aggregates models from all enabled providers. Requests are routed by provider/model prefix, not round-robin. |
+
+Plus optional tier routing (`default`/`opus`/`sonnet`/`haiku`) for mapping Claude model tiers to specific provider models.
+
+In `all` mode, provider-discovered models are exposed to Claude Code with a gateway prefix such as `anthropic/deepseek/deepseek-chat`. The model router strips that prefix, sends the bare model name to the chosen provider, and remembers the primary provider-prefixed model for background Claude Code calls that arrive later as hardcoded Claude tier names.
+
+**middleware/auth.ts** — validates `x-api-key` header against `config.server.authToken`.
+
+**services/message-service.ts** — core orchestration:
+1. Receives Anthropic-format request
+2. Resolves the target provider via `model-router.ts`
+3. Counts input tokens (`js-tiktoken`)
+4. Calls `provider.streamResponse()` with the configured request
+5. Tracks session statistics
+
+**services/native-claude-routing.ts** — decides whether a request should bypass the active provider and fall through to native Anthropic passthrough. Applied when the requested model is a hardcoded Claude tier name and no primary model has been established yet for this session.
+
+**services/prompt-serializer.ts** — converts `MessagesRequest` to a truncated human-readable string stored in the session request log. The first request in a session captures up to 80 KB of system prompt; subsequent requests cap at 4 KB.
+
+**services/stream-result.ts** — wraps provider `ReadableStream<string>` into the `MessageServiceResult` union. `streamResultWithCapture()` tees the stream and writes the truncated response text back to the session log entry when the stream completes or is cancelled.
+
+### 3. Provider Layer (`packages/daemon/src/proxy/providers/`)
+
+Abstract class hierarchy:
+
+```
+BaseProvider (abstract)
+│
+├── AnthropicMessagesTransport (abstract)
+│   └── Sends POST {baseUrl}/messages with anthropic-version header
+│       ├── OpenRouter
+│       ├── DeepSeek
+│       ├── Ollama
+│       ├── LM Studio
+│       ├── llama.cpp
+│       └── AnthropicPassthrough (direct Anthropic API)
+│
+├── OpenAIChatTransport (abstract)
+│   └── Converts Anthropic → OpenAI Chat, sends POST {baseUrl}/chat/completions
+│       ├── NVIDIA NIM
+│       ├── Kimi (Moonshot)
+│       └── Google AI
+│
+├── OpenAIAccountProvider
+│   └── Custom: PKCE OAuth + OpenAI Responses API + model catalog
+│       ├── openai-account-responses.ts  — Anthropic request → Responses API body
+│       └── openai-account-stream.ts     — Responses API SSE → Anthropic SSE
+│
+└── CopilotProvider
+    └── Custom: device-flow OAuth + dual-token (GH OAuth + Copilot API token)
+        ├── claude-* models  → copilot-native-anthropic.ts (native Anthropic protocol)
+        └── other models     → copilot-chat-stream.ts (OpenAI Chat stream → Anthropic SSE)
+```
+
+**ProviderRegistry** (`registry.ts`) — cached factory pattern. Providers are instantiated on first access and cached until config changes trigger a cache clear.
+
+**api-client.ts** — shared HTTP client with:
+- Configurable timeouts via `AbortController`
+- Error normalization (HTTP error → `{ status, message }`)
+- Model mapping (provider model → Anthropic `ModelInfo` format)
+
+**model-prefix.ts** — `stripGatewayProviderPrefix()` strips `anthropic/` or `<providerId>/` gateway prefixes from the requested model before forwarding to the provider.
+
+#### Transport Protocols
+
+**AnthropicMessagesTransport**:
+- Sends to `POST {baseUrl}/messages` with `anthropic-version: 2023-06-01`
+- Streams response directly as Anthropic SSE events
+- Used by: OpenRouter, DeepSeek, Ollama, LM Studio, llama.cpp
+
+**OpenAIChatTransport**:
+- Converts Anthropic Messages → OpenAI Chat Completions format
+- Sends to `POST {baseUrl}/chat/completions`
+- Transforms OpenAI streaming chunks (delta-based) → Anthropic SSE events (block-based)
+- Handles: text content, tool calls, finish reasons (`stop` → `end_turn`, `tool_calls` → `tool_use`)
+- Used by: NVIDIA NIM, Kimi, Google AI
+
+**Custom providers** handle their own API and auth:
+- `openai-account.ts` — OAuth token management, model fixup (`o1-mini`/`o3-mini` → actual model IDs), delegates to `openai-account-responses.ts` for request building and `openai-account-stream.ts` for the Responses API stream format
+- `copilot.ts` — dual-token lifecycle (GH OAuth token → 25-min Copilot API token), editor version headers. Routes claude-* models through native Anthropic protocol (`copilot-native-anthropic.ts`) to preserve tool_use, thinking, and citation blocks; other models go through `copilot-chat-stream.ts` (OpenAI Chat format)
+
+### 4. SSE Stream Handling (`packages/daemon/src/core/sse/writer.ts`)
+
+Serializes Anthropic-compatible Server-Sent Events:
+
+```
+event: message_start
+data: { type: "message_start", message: { ... } }
+
+event: content_block_start
+data: { type: "content_block_start", index: 0, content_block: { type: "text", text: "" } }
+
+event: content_block_delta
+data: { type: "content_block_delta", index: 0, delta: { type: "text_delta", text: "Hello" } }
+
+event: content_block_stop
+data: { type: "content_block_stop", index: 0 }
+
+event: message_delta
+data: { type: "message_delta", delta: { stop_reason: "end_turn" }, usage: { output_tokens: 42 } }
+
+event: message_stop
+data: { type: "message_stop" }
+```
+
+Also provides `teeWithCapture()` — a stream tee that captures text deltas for session logging without interfering with the main stream. Used by `stream-result.ts` to store a truncated response preview.
+
+### 5. Config System (`packages/daemon/src/config/`)
+
+```
+config.json (plain JSON, no secrets)
+     │
+     │ extractSecretsToStore()  ── on save
+     │ hydrateSecretsFromStore() ── on load
+     ▼
+secrets.enc.json (AES-256-GCM encrypted JSON)
+     │
+     │ EncryptedFileSecretStore (encrypt/decrypt with master key)
+     ▼
+secret.key (32-byte hex master key) or CC_GATEWAY_MASTER_KEY env var
+```
+
+- **Paths** (`paths.ts`) — centralized functions for all config directory paths: `getConfigDir()`, `getConfigPath()`, `getPidPath()`, `getLogPath()`, `getSecretsPath()`, `getMasterKeyPath()`, `getCurrentSessionPath()`, `getSessionArchivePath()`. Handles the Windows `%APPDATA%` path on Win32.
+- **Schema** (`schema.ts`) — TypeScript types, provider defaults (base URLs, labels), CLI flag mappings
+- **Validation** (`validation.ts`) — runtime normalization with default merging
+- **Secret splitting** (`secrets/config-splitter.ts`) — extracts API keys, OAuth tokens, and auth token from config JSON into encrypted store
+- **Encrypted store** (`secrets/encrypted-file-store.ts`) — AES-256-GCM with random IV per write
+- **Master key** (`secrets/master-key.ts`) — resolution order: env var → stored file → generate new
+
+### 6. Session System (`packages/daemon/src/runtime/`)
+
+Each daemon process = one session. Tracked in memory with disk persistence. The session module is split into three focused files:
+
+- **`session-types.ts`** — TypeScript interfaces: `SessionRecord`, `SessionModelStat`, `SessionProviderStat`, `SessionRequestLogEntry`
+- **`session-stats.ts`** — Pure functions for applying a request entry to session stats (`applyRequestToSessionStats`), computing totals, and normalizing legacy records
+- **`session-store.ts`** — Disk I/O: `readCurrentSession`, `writeCurrentSession`, `archiveSession`, `listArchivedSessions`, `clearArchivedSessions`. Uses `appendPrivateFile`/`writePrivateFile` so files are written with restricted permissions
+- **`sessions.ts`** — Orchestration: session start/end/heartbeat, crash recovery, checkpoint timer, process watching; composes the three modules above
+
+Behavioral properties:
+- **Checkpoint**: full session serialized to `current-session.json` every 10 seconds
+- **Crash recovery**: on startup, any leftover session from a crash is recovered and archived
+- **Heartbeat**: if the launching process stops heartbeating, session auto-ends
+- **Per-model and per-provider stats**: requests, errors, latency, last activity
+- **Rolling request log**: last 120 entries preserved in session record
+- **Archive**: completed sessions appended to `sessions.jsonl` (max 200, newest first)
+- **Prompt capture**: request log entries include serialized prompt text (capped by `prompt-serializer.ts`)
+- **Response preview**: streamed responses are tee'd via `stream-result.ts` and truncated (4 KB) for UI inspection
+
+### 7. Panel API (`packages/daemon/src/panel/`)
+
+Hono-based REST API for the web panel. The panel module is composed of:
+
+**`app.ts`** — thin coordinator. Creates the Hono app, instantiates `PanelRuntime`, mounts `requirePanelAccess` middleware on `/api/*`, and delegates to each route module.
+
+**`contracts.ts`** — shared TypeScript types for every panel API request and response shape (`GatewayStatusResponse`, `StatsResponse`, `ProviderInfo`, `SessionsResponse`, etc.). Imported by route modules and consumed by the React panel.
+
+**`runtime.ts`** — `PanelRuntime` class. Holds the live `Config`, a `ProviderRegistry` instance, and in-memory OAuth flow maps (PKCE flows for OpenAI Account, device-code flows for GitHub Copilot). Exposes `saveAndUpdateConfig()` so route handlers can persist and hot-reload config in one call.
+
+**`middleware/auth.ts`** — `requirePanelAccess` middleware:
+- Allows requests from Tauri webview origins (`tauri://localhost`, `https://tauri.localhost`) and the Vite dev server in non-production mode
+- CORS headers are set for allowed origins
+- Sensitive endpoints (config write, session clear, shutdown, shell install, OAuth flows, launch commands) require a valid `Authorization: Bearer <token>` or `x-api-key` header even from loopback
+- Requests from cross-site browser origins without a valid token are rejected with 403
+
+**`routes/`** — one file per route group:
+
+| File | Endpoints |
+|---|---|
+| `status-routes.ts` | `GET /api/status`, `POST /api/control/shutdown`, `GET /api/stats`, `GET /api/logs` (SSE) |
+| `config-routes.ts` | `GET /api/config`, `PUT /api/config` |
+| `provider-routes.ts` | `GET /api/providers`, `POST /api/providers/:id/test`, `GET /api/models/:providerId`, `GET /api/routing/options` |
+| `session-routes.ts` | `GET /api/sessions`, `DELETE /api/sessions`, `POST /api/launch/end`, `POST /api/launch/heartbeat`, `POST /api/launch/attach` |
+| `shell-routes.ts` | `GET /api/launch-commands`, `GET /api/launch-command`, `GET /api/shell-setup`, `GET /api/shell-setup/snippet/:shell`, `POST /api/shell-setup/install`, `POST /api/launch/prepare` |
+| `oauth-routes.ts` | `POST /api/providers/openai_account/oauth/start`, `GET /api/providers/openai_account/oauth/status/:state`, `POST /api/providers/openai_account/oauth/logout`, `POST /api/providers/copilot/oauth/start`, `GET /api/providers/copilot/oauth/status/:flowId`, `POST /api/providers/copilot/oauth/logout` |
+| `static-routes.ts` | React SPA static file serving |
+
+Panel also serves the React SPA static files (built by Vite to `packages/daemon/dist/static/`).
+
+### 8. Frontend (`packages/panel/src/`)
+
+React 19 SPA built with Vite 6 + Ant Design 5 + Zustand 5.
+
+- **Dashboard** — live session view with provider cards, SSE log feed, quick-launch buttons
+- **Providers** — toggle providers, edit API keys, OAuth login, test connections, add extra models
+- **Routing** — tier-based model routing UI
+- **History** — session archive with per-request drill-down
+- **Settings** — daemon configuration
+
+### 9. Desktop Shell (`packages/desktop/`)
+
+Tauri v2 app (Rust + webview). Architecture:
+
+- **Production mode**: the daemon runs as a Tauri sidecar (Bun-compiled binary)
+- **External daemon mode**: development-only path where the daemon runs outside Tauri for hot reload
+- **Panel served as static files**: the React build output is served by the daemon, not by Tauri
+- **Build pipeline**: Bun compiles the daemon → binary copied to Tauri's `binaries/` directory → Tauri bundles everything
+
+The Rust layer is deliberately narrow. Its job is to integrate with the OS, own the sidecar process, and expose a small command surface to the panel. Provider logic, panel APIs, config semantics, and session history remain in the TypeScript daemon.
+
+#### Rust module boundaries
+
+| Module | Role |
+|---|---|
+| `src/lib.rs` | Application composition: plugins, managed state, setup hook, command registration, exit shutdown |
+| `src/commands.rs` | Tauri command facade. Converts internal errors into serializable `{ code, message }` command errors |
+| `src/daemon_supervisor.rs` | Async sidecar supervisor protected by a Tokio mutex. Starts, stops, reports status, drains process output, and cleans stale daemon PIDs before spawning |
+| `src/external_url.rs` | External browser policy. Only allowlisted `https://` hosts can be opened from the panel |
+| `src/master_key.rs` | OS keychain-backed 32-byte hex master key generation and validation |
+| `src/config.rs` | Desktop-specific environment flags shared across modules |
+
+#### Tauri command surface
+
+| Command | Purpose | Notes |
+|---|---|---|
+| `start_daemon` | Start the bundled daemon sidecar | Refuses when `CC_GATEWAY_EXTERNAL_DAEMON=1` |
+| `stop_daemon` | Stop the supervised sidecar | Idempotent when no child is running |
+| `daemon_status` | Return `{ running, pid }` for the current supervised child | Tracks the sidecar owned by this Tauri process |
+| `open_url` | Open an allowlisted external URL in the OS browser | Validates scheme and host before calling the shell plugin |
+
+Command errors are structured as `{ code, message }`. This keeps the panel from depending on free-form Rust error strings while still preserving useful diagnostic text.
+
+#### Sidecar lifecycle
+
+```
+Tauri setup
+  │
+  ├─ if CC_GATEWAY_EXTERNAL_DAEMON=1:
+  │    skip autostart; npm dev process owns daemon
+  │
+  └─ otherwise:
+       master_key::get_or_create_hex()
+       daemon_supervisor.start(app, key)
+         ├─ return existing child PID if already running
+         ├─ clean stale daemon PID from previous crashed dev session
+         ├─ spawn Bun-compiled sidecar with CC_GATEWAY_SECRET_KEY
+         └─ spawn async log-drain task for stdout/stderr
+
+Tauri ExitRequested
+  └─ best-effort supervisor.stop()
+```
+
+The stale PID cleanup performs blocking OS process operations through `spawn_blocking`, keeping the async command path responsive. The supervisor checks for an already-owned child before cleanup so repeated `start_daemon` calls cannot terminate the current sidecar.
+
+The `prepare-sidecar.mjs` script handles cross-platform compilation:
+
+| Host | Target Triple |
+|---|---|
+| macOS ARM64 | `aarch64-apple-darwin` |
+| macOS x64 | `x86_64-apple-darwin` |
+| Linux x86_64 | `x86_64-unknown-linux-gnu` |
+| Linux ARM64 | `aarch64-unknown-linux-gnu` |
+| Windows x86_64 | `x86_64-pc-windows-msvc` |
+
+## Request Lifecycle (Detailed)
+
+```
+Claude Code
+  │ POST /v1/messages
+  │ Anthropic Messages format
+  │ x-api-key: <authToken>
+  ▼
+┌──────────────────────────────────────────────┐
+│ Proxy Middleware Chain                       │
+│                                              │
+│  1. runtime.reloadConfig()                   │
+│     Reads config.json + decrypts secrets     │
+│     (happens on EVERY request)               │
+│                                              │
+│  2. auth.validate()                          │
+│     Compares x-api-key to config.authToken   │
+│                                              │
+│  3. model-router.resolve()                   │
+│     Determines target provider + model       │
+└──────────────────────────────────────────────┘
+  │
+  ▼
+┌──────────────────────────────────────────────┐
+│ Message Service                              │
+│                                              │
+│  1. Count input tokens (js-tiktoken)         │
+│  2. Get provider from ProviderRegistry       │
+│  3. Call provider.streamResponse(req, tokens)│
+│  4. Wrap stream with capture (stream-result) │
+└──────────────────────────────────────────────┘
+  │
+  ▼
+┌──────────────────────────────────────────────┐
+│ Provider Layer                               │
+│                                              │
+│  AnthropicMessagesTransport:                 │
+│    POST {baseUrl}/messages                   │
+│    Headers: anthropic-version, Bearer auth   │
+│    Streams SSE events directly               │
+│                                              │
+│  — or —                                      │
+│                                              │
+│  OpenAIChatTransport:                        │
+│    Convert request (anthropicToOpenAI)       │
+│    POST {baseUrl}/chat/completions           │
+│    Transform OpenAI delta stream → SSE       │
+│                                              │
+│  — or —                                      │
+│                                              │
+│  OpenAI Account:                             │
+│    buildOpenAIAccountResponsesRequest()      │
+│    POST /v1/responses (Responses API)        │
+│    transformOpenAIAccountResponsesStream()   │
+│                                              │
+│  — or —                                      │
+│                                              │
+│  Copilot (claude-* model):                   │
+│    streamCopilotNativeAnthropic()            │
+│    POST {endpoint}/v1/messages               │
+│    anthropic-version header                  │
+│    Pass-through Anthropic SSE                │
+│                                              │
+│  — or —                                      │
+│                                              │
+│  Copilot (other model):                      │
+│    anthropicToOpenAI()                       │
+│    POST {endpoint}/chat/completions          │
+│    transformCopilotChatStream()              │
+└──────────────────────────────────────────────┘
+  │
+  ▼
+┌──────────────────────────────────────────────┐
+│ SSE Transformation + Capture                 │
+│                                              │
+│  streamResultWithCapture:                    │
+│    teeWithCapture → session log entry        │
+│    truncated response preview (4 KB)         │
+│                                              │
+│  AnthropicMessagesTransport:                 │
+│    Pass-through (already Anthropic SSE)      │
+│    Only wraps: message_start, message_stop   │
+│                                              │
+│  OpenAIChatTransport / Copilot Chat:         │
+│    Parse delta-based chunks →                │
+│    content_block_start / delta / stop         │
+│    Handle tool call accumulation             │
+│    Map finish_reason → stop_reason           │
+└──────────────────────────────────────────────┘
+  │
+  ▼
+Claude Code receives Anthropic SSE stream
+```
+
+## Security Model
+
+| Threat | Mitigation |
+|---|---|
+| Unauthorized proxy access | `x-api-key` header validation on every request |
+| Network exposure | Both servers bind to `127.0.0.1` only |
+| Secrets at rest | AES-256-GCM encryption, random IV per write |
+| OAuth token theft | Tokens encrypted in store, auto-refreshed |
+| Cross-origin panel access | Origin allowlist (Tauri webview + Vite dev server only). Sensitive endpoints additionally require a valid Bearer/x-api-key token regardless of origin. |
+| Unauthenticated local mutations | Config writes, session clears, OAuth flows, and launch-command endpoints require the gateway token even from loopback. |
+| Master key exposure | Can be injected via env var instead of stored on disk |
+
+## Build & Release Pipeline
+
+```
+Source → npm run build
+           ├── tsup → packages/daemon/dist/ (daemon ESM bundle)
+           └── vite → packages/daemon/dist/static/ (panel SPA)
+
+Quality Gate (GitHub Actions — .github/workflows/quality.yml)
+  ├── On every PR touching daemon / panel / desktop / docs
+  ├── TypeScript job (ubuntu-22.04)
+  │   ├── npm ci
+  │   ├── npm test           (Node built-in test runner)
+  │   ├── npm run typecheck  (tsc --noEmit across daemon + panel)
+  │   └── npm run build
+  └── Rust job (ubuntu-22.04)
+      ├── cargo fmt --check
+      ├── cargo check
+      ├── cargo test
+      └── cargo clippy --all-targets -- -D warnings
+
+Desktop Build (GitHub Actions — .github/workflows/desktop-build.yml, on tag push)
+  ├── bun compile → daemon binary (per-platform)
+  ├── prepare-sidecar → copy to Tauri binaries/
+  └── tauri build → DMG / deb+rpm+AppImage / MSI+portable zip
+```
+
+## Runtime Storage Layout
+
+```
+# Linux / macOS
+~/.config/claude-code-provider-gateway/
+
+# Windows
+%APPDATA%\claude-code-provider-gateway\
+
+├── config.json              # Non-sensitive config
+├── secrets.enc.json         # AES-256-GCM encrypted secrets
+├── secret.key               # Master encryption key (32-byte hex)
+├── daemon.pid               # Process ID
+├── daemon.log               # Log output (rotating buffer)
+├── current-session.json     # Active session (checkpointed every 10s)
+└── sessions.jsonl           # Session archive (append-only, max 200)
+```

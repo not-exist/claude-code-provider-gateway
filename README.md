@@ -1,0 +1,310 @@
+<div align="center">
+
+# Claude Code Provider Gateway
+
+**Stop paying Anthropic prices. Keep the Claude Code experience.**
+
+Run Claude Code through OpenRouter, DeepSeek, OpenAI Account, GitHub Copilot, NVIDIA NIM, Kimi, Google AI, Ollama, LM Studio, llama.cpp, or Anthropic itself, while keeping the Claude Code workflow intact.
+
+[![Version](https://img.shields.io/badge/v0.1.0-initial_release-111827?style=for-the-badge)](#status)
+[![License](https://img.shields.io/badge/license-MIT-22c55e?style=for-the-badge)](LICENSE)
+[![Desktop App](https://img.shields.io/badge/desktop_app-Tauri-24c8db?style=for-the-badge)](packages/desktop)
+[![Providers](https://img.shields.io/badge/providers-10-2563eb?style=for-the-badge)](#supported-providers)
+<br />
+[![Platforms](https://img.shields.io/badge/macOS%20%7C%20Windows%20%7C%20Linux-supported-f97316?style=for-the-badge)](#system-requirements)
+[![No Telemetry](https://img.shields.io/badge/telemetry-none-0f172a?style=for-the-badge)](#pricing)
+[![Forever Free](https://img.shields.io/badge/forever-free-16a34a?style=for-the-badge)](#pricing)
+
+**Desktop-first. Local-only. Forever free.**
+
+</div>
+
+<p align="center">
+  <img src=".github/assets/home.gif" alt="Claude Code Provider Gateway desktop app demo" width="95%" />
+</p>
+
+---
+
+## What This Is
+
+Claude Code Provider Gateway, or CCPG, is a desktop app that starts a local Anthropic-compatible proxy on your machine. Claude Code talks to the gateway. The gateway routes each request to the provider and model you configured, translates protocols when needed, and streams the result back in Anthropic SSE format.
+
+```text
+Claude Code -> CCPG desktop app -> local proxy -> your selected LLM provider
+```
+
+You keep Claude Code's agent loop, tool use, project context, custom commands, hooks, MCP servers, and IDE workflow. You choose the model backend.
+
+CCPG is not an npm package for end users. It is built to be downloaded, opened, configured in a UI, and left running as a desktop app.
+
+## Why It Exists
+
+Claude Code is one of the best AI coding tools available, but the default experience keeps you tied to one provider, one model catalog, and one pricing model.
+
+CCPG gives you the missing control layer:
+
+- Use cheaper models for routine edits.
+- Use stronger reasoning models when the task deserves it.
+- Run local models for sensitive code.
+- Use Copilot or OpenAI Account auth from a desktop UI.
+- See what Claude Code is actually sending in the background.
+
+Everything runs locally. There is no hosted CCPG service, no telemetry, no account system, and no gateway markup. The app is MIT licensed and intended to be free forever.
+
+## TL;DR
+
+1. Download the desktop installer for your OS.
+2. Open CCPG. The daemon starts automatically.
+3. Add one provider in **Providers** and click **Test**.
+4. Install the `ccpg` shell command from **Dashboard -> Shell Setup**.
+5. Launch Claude Code:
+
+```bash
+ccpg --<provider>
+```
+
+After that, switch providers per session:
+
+```bash
+ccpg --OpenRouter
+ccpg --OpenAIAccount
+ccpg --Copilot
+ccpg --Ollama
+ccpg --all
+```
+
+## Status
+
+The public launch target is **v0.1.0**. When the repository goes public, CCPG should already have desktop installers attached to the v0.1.0 GitHub Release.
+
+Until that release is cut, this repository is the source of truth for development. The production path is desktop-only: users should not need Node.js, npm, Rust, Bun, or hand-edited terminal config.
+
+The next documentation step is a separate official docs site repository. Until then, the key docs live here:
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [Development](docs/DEVELOPMENT.md)
+- [Contributing](CONTRIBUTING.md)
+- [Security](SECURITY.md)
+- [Changelog](CHANGELOG.md)
+
+## Features
+
+- **Desktop app, not a terminal science project** - Tauri app for macOS, Windows, and Linux with provider setup, connection tests, routing, logs, and history in one UI.
+- **10 providers out of the box** - OpenAI Account, GitHub Copilot, OpenRouter, DeepSeek, NVIDIA NIM, Kimi, Google AI, Ollama, LM Studio, and llama.cpp.
+- **Anthropic-compatible local proxy** - Claude Code sends Anthropic Messages API requests to `127.0.0.1`; CCPG translates and routes them.
+- **Full streaming** - provider responses stream back as Anthropic-style SSE events, so Claude Code still feels live.
+- **Model routing** - map Claude tiers like `opus`, `sonnet`, and `haiku` to different providers and models.
+- **All-providers mode** - aggregate enabled providers into one model catalog and choose by model in Claude Code.
+- **Built-in OAuth** - OpenAI Account uses PKCE OAuth. GitHub Copilot uses Device Flow. Tokens refresh automatically.
+- **Local model support** - Ollama, LM Studio, and llama.cpp run through the same Claude Code flow.
+- **Request history** - see model, provider, prompt, response preview, input tokens, latency, errors, and session totals.
+- **Encrypted secrets** - API keys, OAuth tokens, and gateway auth token are split out of config and stored with AES-256-GCM.
+- **No telemetry** - no cloud service, no database server, no analytics, no account.
+
+## The Hidden Prompt Viewer
+
+Ever wonder what Claude Code is actually sending to the API?
+
+CCPG logs each request Claude Code sends through the gateway, including background calls that do not appear as normal chat messages. In the History UI you can inspect:
+
+- the requested model and routed provider model
+- the serialized prompt, including the first request's system prompt
+- tool-use traffic that appears in the message stream
+- input token count
+- latency to first byte
+- provider errors
+- captured response text preview
+
+<p align="center">
+  <img src=".github/assets/logs.png" alt="CCPG History UI showing prompt, response, token count, latency, and routed provider model" width="95%" />
+</p>
+
+This is useful for debugging cost, understanding why a model behaved a certain way, and seeing background housekeeping calls that otherwise feel invisible.
+
+## How `ccpg --all` Works
+
+`ccpg --all` is not round-robin and it does not randomly pick a provider.
+
+When you launch with `--all`, CCPG enables model discovery across every provider you turned on in the app. Claude Code's model picker sees gateway-prefixed model IDs such as:
+
+```text
+anthropic/openrouter/anthropic/claude-sonnet-4.5
+anthropic/deepseek/deepseek-chat
+anthropic/ollama/qwen2.5-coder
+```
+
+When Claude Code sends a request for one of those models, CCPG reads the provider prefix and routes the request to that provider and model. If Claude Code later sends background requests using hardcoded Claude tier names, CCPG remembers the primary provider-prefixed model selected in the session and routes those background calls there too.
+
+Use `--all` when you want to choose models from multiple providers inside one Claude Code session. Use `ccpg --DeepSeek`, `ccpg --OpenRouter`, or another single-provider flag when you want a simpler model list.
+
+<p align="center">
+  <img src=".github/assets/claude_models.png" alt="Claude Code /model picker showing gateway-provided models" width="90%" />
+</p>
+
+## Supported Providers
+
+### Cloud
+
+| Provider | Auth | Notes |
+|---|---|---|
+| OpenAI Account | OAuth PKCE | Uses your OpenAI account session from the desktop app. |
+| GitHub Copilot | OAuth Device Flow | Uses Copilot model access available to your GitHub account. |
+| OpenRouter | API key | Broad model catalog through one provider. |
+| DeepSeek | API key | Anthropic-compatible endpoint. |
+| NVIDIA NIM | API key | OpenAI-compatible endpoint, translated by CCPG. |
+| Kimi (Moonshot) | API key | OpenAI-compatible endpoint, translated by CCPG. |
+| Google AI | API key | OpenAI-compatible Gemini endpoint, translated by CCPG. |
+
+### Local
+
+| Provider | Default URL | Notes |
+|---|---|---|
+| Ollama | `http://localhost:11434` | Pull models in Ollama, then select them in CCPG. |
+| LM Studio | `http://localhost:1234/v1` | Load a local model and enable the server. |
+| llama.cpp | `http://localhost:8080/v1` | Run the llama.cpp server locally. |
+
+### Anthropic Passthrough
+
+CCPG can also pass native Claude requests through to Anthropic when credentials are available. This is useful when you want Claude models and non-Anthropic models in the same gateway workflow.
+
+## System Requirements
+
+### For Users
+
+| Platform | Release format | Notes |
+|---|---|---|
+| macOS Apple Silicon | `.dmg` | Built by CI for `aarch64-apple-darwin`. |
+| macOS Intel | `.dmg` | Built by CI for `x86_64-apple-darwin`. |
+| Linux x86_64 | `.deb`, `.rpm`, `.AppImage` | CI builds on Ubuntu 22.04 with WebKitGTK dependencies. |
+| Linux ARM64 | `.deb`, `.rpm`, `.AppImage` | CI builds on Ubuntu 22.04 ARM. |
+| Windows x86_64 | `.msi`, `-setup.exe`, portable `.zip` | Windows WebView2 is required; it ships with modern Windows 10/11 through Windows Update. |
+
+You also need Claude Code installed and able to run from your shell as `claude`.
+
+### For Source Development
+
+Source development needs Node.js, npm workspaces, Bun, Rust, and Tauri system dependencies. See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
+
+## Install
+
+Public installers ship with the v0.1.0 release.
+
+Once available, download the latest desktop build from:
+
+[GitHub Releases](https://github.com/danielalves96/claude-code-provider-gateway/releases/latest)
+
+Then:
+
+1. Open the app.
+2. Add or log into at least one provider.
+3. Test the provider connection.
+4. Install the `ccpg` shell command from **Dashboard -> Shell Setup**.
+5. Relaunch your shell.
+6. Start Claude Code through CCPG.
+
+```bash
+ccpg --DeepSeek
+```
+
+Any arguments after the provider flag are passed to Claude Code:
+
+```bash
+ccpg --DeepSeek --resume <session-id>
+ccpg --OpenRouter --dangerously-skip-permissions
+ccpg --Ollama --continue
+```
+
+## Provider Flags
+
+| Flag | Mode |
+|---|---|
+| `--OpenAIAccount` | OpenAI Account models |
+| `--Copilot` or `--GitHubCopilot` | GitHub Copilot models |
+| `--OpenRouter` | OpenRouter models |
+| `--DeepSeek` | DeepSeek models |
+| `--NvidiaNim` | NVIDIA NIM models |
+| `--Kimi` | Kimi models |
+| `--Google` or `--GoogleAI` | Google AI models |
+| `--Ollama` | Ollama local models |
+| `--LMStudio` | LM Studio local models |
+| `--LlamaCpp` | llama.cpp local models |
+| `--all` or `--a` | All enabled providers in one model catalog |
+
+Flags are case-insensitive in the shell setup flow.
+
+## Pricing
+
+CCPG is free, open source, and runs locally.
+
+There is no hosted CCPG bill. You only pay whatever your selected upstream provider charges, or nothing when you use a local provider. CCPG does not add a per-request fee and does not proxy traffic through a hosted CCPG server.
+
+## Comparison
+
+This table is about product focus, not a claim that other projects are bad. Terminal-first routers are great for technical users. CCPG is trying to make provider switching feel like a desktop product.
+
+| Capability | CCPG | LiteLLM | claude-code-router |
+| --- | --- | --- | --- |
+| **Install path** | Desktop installer | `pip install` + config file | `npm install` + config file |
+| **User interface** | Desktop app | Terminal / API-first | Terminal-first |
+| **Session history** | ✅ Full UI | ⚠️ Depends on observability setup | ❌ Limited |
+| **Per-request token visibility** | ✅ Yes | ⚠️ Often provider-dependent | ❌ Limited |
+| **Background prompt visibility** | ✅ Yes | ❌ No | ❌ No |
+| **OpenAI Account OAuth** | ✅ Built-in | ❌ Manual / custom | ❌ Manual / custom |
+| **GitHub Copilot OAuth** | ✅ Built-in | ❌ Manual / custom | ❌ Manual / custom |
+| **Local model support** | ✅ Ollama, LM Studio, llama.cpp | ✅ Yes | ✅ Yes |
+| **Secrets storage** | ✅ AES-256-GCM encrypted store | ⚠️ Deployment-dependent | ⚠️ Config-dependent |
+| **Non-technical user focus** | ✅ First-class | ❌ Not the primary target | ❌ Not the primary target |
+
+## How It Works
+
+```text
+┌────────────────┐     ┌───────────────────────────────────┐     ┌─────────────────┐
+│  Claude Code   │     │   Claude Code Provider Gateway    │     │  OpenRouter     │
+│                │────▶│  ┌─────────────────────────────┐  │────▶│  DeepSeek       │
+│                │◀────│  │ Proxy :49250                │  │◀────│  OpenAI Account │
+│  Anthropic     │ SSE │  │ /v1/messages -> translate   │  │     │  Copilot        │
+│  Messages API  │     │  │ /v1/models   -> aggregate   │  │     │  Ollama         │
+└────────────────┘     │  └─────────────────────────────┘  │     │  ...            │
+                       │  ┌─────────────────────────────┐  │     └─────────────────┘
+                       │  │ Desktop Management UI       │  │
+                       │  │ Providers · Routing · Logs  │  │
+                       │  │ History · Shell Setup       │  │
+                       │  └─────────────────────────────┘  │
+                       └───────────────────────────────────┘
+```
+
+Every request goes through the same basic flow:
+
+1. Claude Code sends `POST /v1/messages` to CCPG's local proxy.
+2. CCPG authenticates the local request with its generated gateway token.
+3. CCPG resolves the target provider and model from the selected launch mode, model prefix, or routing rules.
+4. CCPG converts Anthropic Messages to the provider's native format when needed.
+5. CCPG streams the response back as Anthropic-compatible SSE.
+6. CCPG records session metadata and request details locally.
+
+## Runtime Storage
+
+Runtime files live in:
+
+- Linux/macOS: `~/.config/claude-code-provider-gateway/`
+- Windows: `%APPDATA%/claude-code-provider-gateway/`
+
+| File | Purpose |
+|---|---|
+| `config.json` | Non-sensitive provider settings, routing rules, ports, and model mode. |
+| `secrets.enc.json` | API keys, OAuth tokens, and auth token encrypted with AES-256-GCM. |
+| `secret.key` | Local master key, unless `CC_GATEWAY_MASTER_KEY` is provided. |
+| `current-session.json` | Active session checkpoint. |
+| `sessions.jsonl` | Completed session archive, capped to 200 sessions. |
+
+## Documentation
+
+- [Architecture](docs/ARCHITECTURE.md) - system layers, request lifecycle, routing, security model, storage.
+- [Development](docs/DEVELOPMENT.md) - source setup, desktop dev, tests, builds, release flow.
+- [Contributing](CONTRIBUTING.md) - issues, PRs, conventions, contribution workflow.
+- [Security](SECURITY.md) - local threat model and vulnerability reporting.
+- [Changelog](CHANGELOG.md) - release notes.
+
+## License
+
+MIT © [Daniel Luiz Alves 🇧🇷](https://github.com/danielalves96)
