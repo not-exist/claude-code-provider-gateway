@@ -81,6 +81,8 @@ export default function OpenAIGatewayPage() {
               )
             }
             onClick={() => copy(`model-${text}`, text)}
+            aria-label={`Copy model ${text}`}
+            title={`Copy model ${text}`}
           />
         </Flex>
       ),
@@ -146,12 +148,27 @@ export default function OpenAIGatewayPage() {
           title="OpenAI Gateway"
           description="Expose this local daemon as an OpenAI-compatible endpoint."
         />
-        {status === "success" && (
+        {models.status === "success" && (
           <Badge count={modelList.length} color="blue" showZero overflowCount={999}>
             <Card size="small" styles={{ body: { padding: "8px 16px" } }}>
               <Space>
                 <ApiOutlined style={{ color: token.colorPrimary }} />
                 <Text strong>Active Models</Text>
+              </Space>
+            </Card>
+          </Badge>
+        )}
+        {models.status === "error" && (
+          <Badge status="error" text="">
+            <Card size="small" styles={{ body: { padding: "8px 16px" } }}>
+              <Space>
+                <ApiOutlined style={{ color: token.colorError }} />
+                <Text strong type="danger">
+                  Models Unavailable
+                </Text>
+                <Button size="small" onClick={models.reload}>
+                  Retry
+                </Button>
               </Space>
             </Card>
           </Badge>
@@ -238,27 +255,46 @@ export default function OpenAIGatewayPage() {
                       loading={models.status === "loading"}
                       onClick={models.reload}
                       type="text"
+                      aria-label="Refresh models"
+                      title="Refresh models"
                     />
                   </Space>
                 }
                 style={{ height: "100%" }}
                 styles={{ body: { padding: 0 } }}
               >
-                <ConfigProvider theme={{ components: { Table: { headerBorderRadius: 0 } } }}>
-                  <Table
-                    dataSource={filteredModels}
-                    columns={tableColumns}
-                    rowKey="id"
-                    size="small"
-                    pagination={{
-                      pageSize: 6,
-                      showSizeChanger: false,
-                      position: ["bottomRight"],
-                      style: { margin: "12px 16px" },
-                    }}
-                    scroll={{ y: 260 }}
+                {models.status === "error" ? (
+                  <Alert
+                    type="error"
+                    showIcon
+                    message="Failed to load models"
+                    description={
+                      models.error instanceof Error ? models.error.message : "Unknown error"
+                    }
+                    action={
+                      <Button size="small" onClick={models.reload}>
+                        Retry
+                      </Button>
+                    }
+                    style={{ margin: token.padding }}
                   />
-                </ConfigProvider>
+                ) : (
+                  <ConfigProvider theme={{ components: { Table: { headerBorderRadius: 0 } } }}>
+                    <Table
+                      dataSource={filteredModels}
+                      columns={tableColumns}
+                      rowKey="id"
+                      size="small"
+                      pagination={{
+                        pageSize: 6,
+                        showSizeChanger: false,
+                        position: ["bottomRight"],
+                        style: { margin: "12px 16px" },
+                      }}
+                      scroll={{ y: 260 }}
+                    />
+                  </ConfigProvider>
+                )}
               </Card>
             </Col>
           </Row>

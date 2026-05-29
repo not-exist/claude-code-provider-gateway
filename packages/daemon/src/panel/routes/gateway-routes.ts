@@ -15,7 +15,7 @@ export function registerGatewayRoutes(app: Hono, runtime: PanelRuntime): void {
     const config = runtime.currentConfig();
     const baseUrl = `http://127.0.0.1:${config.server.proxyPort}/v1`;
     const apiKey = config.server.authToken;
-    const exampleModel = "commandcode/deepseek-v4-pro";
+    const exampleModel = "<MODEL_NAME>";
     const examples = [
       {
         key: "models",
@@ -60,9 +60,17 @@ export function registerGatewayRoutes(app: Hono, runtime: PanelRuntime): void {
     const baseUrl = `http://127.0.0.1:${config.server.proxyPort}/v1`;
 
     try {
-      const response = await fetch(`${baseUrl}/models`, {
-        headers: { Authorization: `Bearer ${config.server.authToken}` },
-      });
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 5000);
+      let response: Response;
+      try {
+        response = await fetch(`${baseUrl}/models`, {
+          headers: { Authorization: `Bearer ${config.server.authToken}` },
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timer);
+      }
       const body = (await response.json().catch(() => ({}))) as OpenAIModelsResponse & {
         error?: { message?: string };
       };
@@ -84,6 +92,9 @@ export function registerGatewayRoutes(app: Hono, runtime: PanelRuntime): void {
           })),
       });
     } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        return c.json({ error: "Model list request timed out" }, 504);
+      }
       return c.json({ error: err instanceof Error ? err.message : String(err) }, 502);
     }
   });

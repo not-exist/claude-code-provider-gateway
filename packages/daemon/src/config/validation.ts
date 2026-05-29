@@ -222,10 +222,12 @@ function normalizeProviderModels(
 }
 
 function normalizeProviderBaseUrl(id: string, baseUrl: string | undefined): string | undefined {
-  if (id === "commandcode" && baseUrl === "https://api.commandcode.ai/alpha/generate") {
+  if (baseUrl === undefined) return undefined;
+  const normalized = baseUrl.trim().replace(/\/$/, "");
+  if (id === "commandcode" && normalized === "https://api.commandcode.ai/alpha/generate") {
     return "https://api.commandcode.ai/provider/v1";
   }
-  return baseUrl;
+  return normalized || undefined;
 }
 
 function normalizeProviderRuntimeLimits(

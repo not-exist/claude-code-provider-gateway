@@ -51,8 +51,12 @@ export function openAIToAnthropic(req: OpenAIChatCompletionRequest): MessagesReq
   if (req.temperature !== undefined) anthropic.temperature = req.temperature;
   if (req.top_p !== undefined) anthropic.top_p = req.top_p;
   if (req.stop) anthropic.stop_sequences = Array.isArray(req.stop) ? req.stop : [req.stop];
-  if (req.tools?.length) anthropic.tools = req.tools.map(openAIToolToAnthropic);
-  if (req.tool_choice) anthropic.tool_choice = openAIToolChoiceToAnthropic(req.tool_choice);
+  if (req.tool_choice !== "none" && req.tools?.length) {
+    anthropic.tools = req.tools.map(openAIToolToAnthropic);
+  }
+  if (req.tool_choice && req.tool_choice !== "none") {
+    anthropic.tool_choice = openAIToolChoiceToAnthropic(req.tool_choice);
+  }
 
   return anthropic;
 }
@@ -99,8 +103,7 @@ function userContent(content: OpenAIChatMessage["content"]): string | ContentBlo
 
   return content.flatMap((part): ContentBlock[] => {
     if (part.type === "text") return [{ type: "text", text: part.text }];
-    const image = imageUrlToAnthropic(part.image_url.url);
-    return image ? [image] : [{ type: "text", text: part.image_url.url }];
+    return [imageUrlToAnthropic(part.image_url.url)];
   });
 }
 
@@ -113,7 +116,7 @@ function contentToText(content: OpenAIChatMessage["content"]): string {
     .join("");
 }
 
-function imageUrlToAnthropic(url: string): ContentBlock | null {
+function imageUrlToAnthropic(url: string): ContentBlock {
   const match = /^data:([^;,]+);base64,(.+)$/i.exec(url);
   if (match) {
     return {

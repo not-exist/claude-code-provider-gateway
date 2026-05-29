@@ -112,10 +112,13 @@ export function listArchivedSessions(): SessionRecord[] {
 function trimArchivedSessions(): void {
   try {
     const path = getSessionArchivePath();
-    const lines = readArchiveTail(path).split("\n").filter(Boolean);
+    const { size } = statSync(path);
+    const tail = readArchiveTail(path);
+    if (!tail && size > MAX_ARCHIVE_READ_BYTES) return;
+    const lines = tail.split("\n").filter(Boolean);
     if (lines.length > MAX_SESSIONS) {
       writePrivateFile(path, `${lines.slice(-MAX_SESSIONS).join("\n")}\n`);
-    } else if (statSync(path).size > MAX_ARCHIVE_READ_BYTES) {
+    } else if (size > MAX_ARCHIVE_READ_BYTES) {
       writePrivateFile(path, lines.length ? `${lines.join("\n")}\n` : "");
     }
   } catch {}

@@ -54,7 +54,12 @@ export class CommandCodeProvider extends BaseProvider {
       timeoutMs: this.requestTimeoutMs(),
     });
 
-    return (json.data ?? [])
+    const data = Array.isArray(json.data) ? json.data : [];
+    return data
+      .filter(
+        (entry): entry is CommandCodeModel =>
+          typeof entry === "object" && entry !== null && typeof entry.id === "string",
+      )
       .map(normalizeCommandCodeModel)
       .filter((model): model is CommandCodeModel => !!model)
       .map((model) => ({
@@ -113,11 +118,11 @@ function normalizeCommandCodeModel(model: CommandCodeModel): CommandCodeModel | 
 }
 
 function commandCodeBaseUrl(config: ProviderConfig): string {
-  const configured = config.baseUrl?.trim();
+  const configured = config.baseUrl?.trim().replace(/\/$/, "");
   if (!configured || configured === "https://api.commandcode.ai/alpha/generate") {
     return DEFAULT_COMMANDCODE_BASE_URL;
   }
-  return configured.replace(/\/$/, "");
+  return configured;
 }
 
 function resolveCommandCodeModel(model: string): string {

@@ -18,7 +18,33 @@ export function registerOpenAIRoutes(app: Hono, runtime: ProxyRuntime): void {
   app.on(["HEAD", "OPTIONS"], "/v1/chat/completions", (_c) => new Response(null, { status: 204 }));
 
   app.post("/v1/chat/completions", async (c) => {
-    const req = await c.req.json<OpenAIChatCompletionRequest>();
+    let req: OpenAIChatCompletionRequest;
+    try {
+      req = await c.req.json<OpenAIChatCompletionRequest>();
+    } catch {
+      return c.json(
+        {
+          error: {
+            message: "Invalid JSON body",
+            type: "invalid_request_error",
+            code: "invalid_request_error",
+          },
+        },
+        400,
+      );
+    }
+    if (!req.model || !Array.isArray(req.messages)) {
+      return c.json(
+        {
+          error: {
+            message: "Missing required fields: model and messages",
+            type: "invalid_request_error",
+            code: "invalid_request_error",
+          },
+        },
+        400,
+      );
+    }
     const requestedModel = req.model;
     const anthropicReq = openAIToAnthropic({ ...req, model: toInternalModelId(req.model) });
     const result = await messages.createMessage(
