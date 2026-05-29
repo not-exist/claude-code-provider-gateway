@@ -134,7 +134,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CC_GATEWAY_TAURI_TARGET: ${{ matrix.rust-target }}
-          RUST_LOG: tauri_bundler=debug
         with:
           projectPath: packages/desktop
           tauriScript: npx tauri
