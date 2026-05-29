@@ -39,11 +39,7 @@ export interface OpenAIChatCompletionRequest {
   top_p?: number;
   stream?: boolean;
   tools?: OpenAIFunctionTool[];
-  tool_choice?:
-    | "auto"
-    | "none"
-    | "required"
-    | { type: "function"; function: { name: string } };
+  tool_choice?: "auto" | "none" | "required" | { type: "function"; function: { name: string } };
   stop?: string | string[];
 }
 

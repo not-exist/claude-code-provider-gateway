@@ -1,12 +1,12 @@
 import { randomUUID } from "node:crypto";
 import type { ModelsListResponse } from "../anthropic/types.js";
+import { toOpenAIModelId } from "./model-alias.js";
 import type {
   OpenAIChatCompletionResponse,
   OpenAIModel,
   OpenAIModelsResponse,
   OpenAIToolCall,
 } from "./types.js";
-import { toOpenAIModelId } from "./model-alias.js";
 
 type FinishReason = "stop" | "length" | "tool_calls" | null;
 
@@ -116,11 +116,13 @@ export async function anthropicStreamToOpenAICompletion(
     }
   }
 
-  const toolCalls = [...state.tools.values()].map((tool): OpenAIToolCall => ({
-    id: tool.id,
-    type: "function",
-    function: { name: tool.name, arguments: tool.arguments },
-  }));
+  const toolCalls = [...state.tools.values()].map(
+    (tool): OpenAIToolCall => ({
+      id: tool.id,
+      type: "function",
+      function: { name: tool.name, arguments: tool.arguments },
+    }),
+  );
 
   return {
     id: state.id,

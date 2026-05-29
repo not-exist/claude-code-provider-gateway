@@ -1,10 +1,10 @@
 import type { Hono } from "hono";
 import { openAIToAnthropic } from "../../core/openai/conversion.js";
+import { toInternalModelId, toOpenAIModelId } from "../../core/openai/model-alias.js";
 import {
   anthropicStreamToOpenAI,
   anthropicStreamToOpenAICompletion,
 } from "../../core/openai/stream.js";
-import { toInternalModelId, toOpenAIModelId } from "../../core/openai/model-alias.js";
 import type { OpenAIChatCompletionRequest } from "../../core/openai/types.js";
 import { getProxySessionId, requireOpenAIAuth } from "../middleware/auth.js";
 import type { ProxyRuntime } from "../runtime.js";

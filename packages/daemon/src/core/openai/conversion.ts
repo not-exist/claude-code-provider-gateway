@@ -57,7 +57,9 @@ export function openAIToAnthropic(req: OpenAIChatCompletionRequest): MessagesReq
   return anthropic;
 }
 
-function openAIToolToAnthropic(tool: NonNullable<OpenAIChatCompletionRequest["tools"]>[number]): Tool {
+function openAIToolToAnthropic(
+  tool: NonNullable<OpenAIChatCompletionRequest["tools"]>[number],
+): Tool {
   return {
     name: tool.function.name,
     description: tool.function.description,

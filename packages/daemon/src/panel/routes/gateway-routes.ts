@@ -20,9 +20,7 @@ export function registerGatewayRoutes(app: Hono, runtime: PanelRuntime): void {
       {
         key: "models",
         title: "List models",
-        command: [`curl ${baseUrl}/models`, `  -H "Authorization: Bearer ${apiKey}"`].join(
-          " \\\n",
-        ),
+        command: [`curl ${baseUrl}/models`, `  -H "Authorization: Bearer ${apiKey}"`].join(" \\\n"),
       },
       {
         key: "chat",
