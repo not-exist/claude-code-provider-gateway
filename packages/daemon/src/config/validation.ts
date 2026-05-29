@@ -195,9 +195,9 @@ function normalizeProviders(
         apiKey: optionalString(provider.apiKey),
         authType: authTypeOrDefault(provider.authType, fallback.authType),
         oauth: normalizeOAuth(provider.oauth, fallback.oauth),
-        models: normalizeStringList(provider.models, fallback.models),
+        models: normalizeProviderModels(id, provider.models, fallback.models),
         disabledModels: normalizeStringList(provider.disabledModels, fallback.disabledModels),
-        baseUrl: optionalString(provider.baseUrl) ?? fallback.baseUrl,
+        baseUrl: normalizeProviderBaseUrl(id, optionalString(provider.baseUrl) ?? fallback.baseUrl),
         rateLimit: runtimeLimits.rateLimit,
         rateWindow: runtimeLimits.rateWindow,
         maxConcurrency: runtimeLimits.maxConcurrency,
@@ -210,6 +210,24 @@ function normalizeProviders(
     },
     {} as Record<string, ProviderConfig>,
   );
+}
+
+function normalizeProviderModels(
+  id: string,
+  models: unknown,
+  fallback: string[] | undefined,
+): string[] {
+  if (id === "commandcode") return [];
+  return normalizeStringList(models, fallback) ?? [];
+}
+
+function normalizeProviderBaseUrl(id: string, baseUrl: string | undefined): string | undefined {
+  if (baseUrl === undefined) return undefined;
+  const normalized = baseUrl.trim().replace(/\/$/, "");
+  if (id === "commandcode" && normalized === "https://api.commandcode.ai/alpha/generate") {
+    return "https://api.commandcode.ai/provider/v1";
+  }
+  return normalized || undefined;
 }
 
 function normalizeProviderRuntimeLimits(

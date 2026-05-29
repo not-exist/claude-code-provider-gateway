@@ -1,6 +1,18 @@
 {
   "name": "@claude-code-provider-gateway/daemon",
-  "version": "0.2.2",
+  "version": "0.2.3",
+  "description": "Claude Code Provider Gateway local daemon",
+  "author": "Daniel Luiz Alves <daniel.xcoders@gmail.com>",
+  "homepage": "https://github.com/danielalves96/cc-provider-gtw#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danielalves96/cc-provider-gtw.git",
+    "directory": "packages/daemon"
+  },
+  "bugs": {
+    "url": "https://github.com/danielalves96/cc-provider-gtw/issues"
+  },
+  "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "scripts": {

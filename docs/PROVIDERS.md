@@ -65,7 +65,7 @@ favorites, icons, suggested models, and OAuth-specific controls.
 | Blackbox AI | `blackbox` | OpenAI Chat |
 | HuggingFace Router | `huggingface` | OpenAI Chat |
 | Ollama Cloud | `ollama_cloud` | OpenAI Chat |
-| Command Code | `commandcode` | Custom AI SDK v5 NDJSON stream |
+| Command Code | `commandcode` | Command Code Provider API (Anthropic Messages for Claude, OpenAI Chat for non-Claude models) |
 
 ### Local Providers
 
@@ -171,6 +171,12 @@ provider is ready.
   `anthropic/groq/llama-3.3-70b-versatile`.
 - Model Chain entries are exposed as synthetic IDs such as
   `anthropic/chain/my-chain`.
+
+The OpenAI Gateway uses the same provider catalog but presents it for OpenAI-compatible clients:
+
+- `GET /v1/models` without the `anthropic-version` header returns every enabled provider model, even when Claude Code is currently running in `single` mode.
+- Public model IDs are shortened by removing the Claude Code `anthropic/` prefix, so `anthropic/groq/llama-3.3-70b-versatile` appears as `groq/llama-3.3-70b-versatile`.
+- Provider-specific aliases can be added in `packages/daemon/src/core/openai/model-alias.ts`; for example, Command Code exposes `commandcode/deepseek-v4-pro` while routing internally to its full provider model ID.
 
 ## Model Chains
 

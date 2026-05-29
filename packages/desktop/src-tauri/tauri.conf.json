@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Claude Code Provider Gateway",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "identifier": "com.ccprovidergtw.desktop",
   "build": {
     "beforeDevCommand": "npm run prepare-sidecar -w @claude-code-provider-gateway/desktop && npm run dev -w @claude-code-provider-gateway/panel",
@@ -28,6 +28,14 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "publisher": "Daniel Luiz Alves <daniel.xcoders@gmail.com>",
+    "homepage": "https://github.com/danielalves96/cc-provider-gtw",
+    "copyright": "Copyright (c) 2026 Daniel Luiz Alves",
+    "license": "MIT",
+    "licenseFile": "../../LICENSE",
+    "category": "DeveloperTool",
+    "shortDescription": "Local desktop gateway for Claude Code provider routing.",
+    "longDescription": "Claude Code Provider Gateway is a local-first desktop app that routes Claude Code through OpenAI Account, GitHub Copilot, OpenRouter, local models, and other OpenAI or Anthropic-compatible providers.",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -35,9 +43,13 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "externalBin": [
-      "binaries/claude-code-provider-gateway-daemon"
-    ]
+    "externalBin": ["binaries/claude-code-provider-gateway-daemon"],
+    "linux": {
+      "deb": {
+        "section": "devel",
+        "priority": "optional"
+      }
+    }
   },
   "plugins": {}
 }

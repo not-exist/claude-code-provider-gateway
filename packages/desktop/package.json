@@ -1,6 +1,18 @@
 {
   "name": "@claude-code-provider-gateway/desktop",
-  "version": "0.2.2",
+  "version": "0.2.3",
+  "description": "Claude Code Provider Gateway desktop app",
+  "author": "Daniel Luiz Alves <daniel.xcoders@gmail.com>",
+  "homepage": "https://github.com/danielalves96/cc-provider-gtw#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danielalves96/cc-provider-gtw.git",
+    "directory": "packages/desktop"
+  },
+  "bugs": {
+    "url": "https://github.com/danielalves96/cc-provider-gtw/issues"
+  },
+  "license": "MIT",
   "private": true,
   "type": "module",
   "scripts": {

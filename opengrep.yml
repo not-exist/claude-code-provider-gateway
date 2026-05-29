@@ -1,0 +1,202 @@
+# OpenGrep / Semgrep rules — cc-provider-gtw
+# Compatible with Semgrep OSS rule format
+
+rules:
+
+  # ── Secrets & API Keys ──────────────────────────────────────────────────────
+
+  - id: no-hardcoded-api-key
+    patterns:
+      - pattern: |
+          const $VAR = "sk-..."
+      - pattern: |
+          apiKey: "sk-..."
+      - pattern: |
+          key: "sk-..."
+      - pattern: |
+          authorization: "Bearer sk-..."
+    message: >
+      [BLOCKING] Hardcoded API key detected. Keys must come from the config
+      layer (packages/daemon/src/config/schema.ts), never from string literals.
+    languages: [typescript]
+    severity: ERROR
+    paths:
+      exclude:
+        - "**/*.test.ts"
+        - "**/*.spec.ts"
+        - "**/__fixtures__/**"
+
+  - id: no-secret-in-log
+    patterns:
+      - pattern: console.$METHOD(..., $X, ...)
+      - pattern: logger.$METHOD(..., $X, ...)
+    metavariable-regex:
+      metavariable: $X
+      regex: ".*(key|secret|token|password|apiKey|api_key|authorization).*"
+    message: >
+      [BLOCKING] Potential sensitive data being logged. Redact or mask the
+      value before logging (e.g. show only the last 4 chars).
+    languages: [typescript]
+    severity: ERROR
+
+  - id: no-secret-in-error-response
+    patterns:
+      - pattern: res.json({ ..., stack: $S, ... })
+      - pattern: res.json({ ..., details: $D, ... })
+      - pattern: res.send({ ..., stack: $S, ... })
+    message: >
+      [BLOCKING] Internal details (stack traces, error details) must not be
+      exposed in HTTP responses. Log internally and return a generic message.
+    languages: [typescript]
+    severity: ERROR
+    paths:
+      include:
+        - "packages/daemon/src/proxy/routes/**"
+        - "packages/daemon/src/proxy/middleware/**"
+
+  # ── Config boundary ──────────────────────────────────────────────────────────
+
+  - id: no-process-env-outside-config
+    pattern: process.env.$VAR
+    message: >
+      [IMPORTANT] Direct process.env access outside the config layer.
+      Read all environment variables through packages/daemon/src/config/schema.ts
+      so validation and defaults are centralized.
+    languages: [typescript]
+    severity: WARNING
+    paths:
+      include:
+        - "packages/daemon/src/**"
+      exclude:
+        - "packages/daemon/src/config/**"
+        - "**/*.test.ts"
+        - "scripts/**"
+
+  # ── Provider / Factory pattern ───────────────────────────────────────────────
+
+  - id: provider-direct-instantiation
+    pattern: new $Class(...)
+    metavariable-regex:
+      metavariable: $Class
+      regex: ".*(Provider|Transport)$"
+    message: >
+      [IMPORTANT] Providers and transports must be created through
+      provider-factory.ts, not instantiated directly. This keeps the registry
+      as the single source of truth for provider creation.
+    languages: [typescript]
+    severity: WARNING
+    paths:
+      include:
+        - "packages/daemon/src/proxy/**"
+      exclude:
+        - "packages/daemon/src/proxy/providers/provider-factory.ts"
+        - "packages/daemon/src/proxy/providers/registry.ts"
+        - "**/*.test.ts"
+
+  # ── Async & error handling ───────────────────────────────────────────────────
+
+  - id: empty-catch-block
+    pattern: |
+      try { ... } catch ($E) {}
+    message: >
+      [BLOCKING] Empty catch block silences errors completely. At minimum,
+      log the error and re-throw or convert it to a typed error response.
+    languages: [typescript]
+    severity: ERROR
+
+  - id: catch-without-handling
+    pattern: |
+      try { ... } catch ($E) { console.log(...) }
+    message: >
+      [IMPORTANT] Catch block only logs without re-throwing or returning a
+      typed error. Callers cannot detect the failure.
+    languages: [typescript]
+    severity: WARNING
+
+  - id: unhandled-stream-error
+    patterns:
+      - pattern: $STREAM.pipe(...)
+      - pattern: $STREAM.on("data", ...)
+    message: >
+      [BLOCKING] Stream without an 'error' event handler will crash the
+      process on network errors. Add: $STREAM.on('error', handler).
+    languages: [typescript]
+    severity: ERROR
+    paths:
+      include:
+        - "packages/daemon/src/proxy/**"
+
+  # ── Input validation ─────────────────────────────────────────────────────────
+
+  - id: route-without-zod-parse
+    patterns:
+      - pattern: |
+          $APP.$METHOD($PATH, async ($REQ, $RES) => { ... })
+      - pattern: |
+          router.$METHOD($PATH, async ($REQ, $RES) => { ... })
+    message: >
+      [IMPORTANT] Route handler does not appear to call .parse() or
+      .safeParse() on the request body/params. All route inputs must be
+      validated with Zod before processing.
+    languages: [typescript]
+    severity: WARNING
+    paths:
+      include:
+        - "packages/daemon/src/proxy/routes/**"
+
+  # ── Frontend security ────────────────────────────────────────────────────────
+
+  - id: sensitive-data-in-localstorage
+    patterns:
+      - pattern: localStorage.setItem($KEY, ...)
+    metavariable-regex:
+      metavariable: $KEY
+      regex: ".*(key|secret|token|password|apiKey|api_key).*"
+    message: >
+      [BLOCKING] Sensitive data stored in localStorage without encryption is
+      vulnerable to XSS. Keep secrets in memory only or use a secure store.
+    languages: [typescript, javascript]
+    severity: ERROR
+    paths:
+      include:
+        - "packages/panel/src/**"
+        - "packages/desktop/src/**"
+
+  - id: sensitive-data-in-console
+    pattern: console.$METHOD(..., $X, ...)
+    metavariable-regex:
+      metavariable: $X
+      regex: ".*(key|secret|token|password|apiKey|api_key).*"
+    message: >
+      [BLOCKING] Potential sensitive value logged to the browser console.
+      Remove the log or mask the value before output.
+    languages: [typescript, javascript]
+    severity: ERROR
+    paths:
+      include:
+        - "packages/panel/src/**"
+
+  - id: dangerous-inner-html
+    pattern: dangerouslySetInnerHTML={{ __html: $VAL }}
+    message: >
+      [IMPORTANT] dangerouslySetInnerHTML can introduce XSS. Ensure $VAL is
+      sanitized with DOMPurify before rendering.
+    languages: [typescript]
+    severity: WARNING
+    paths:
+      include:
+        - "packages/panel/src/**"
+
+  # ── Tauri / Desktop ──────────────────────────────────────────────────────────
+
+  - id: tauri-invoke-unvalidated
+    pattern: invoke($CMD, $ARGS)
+    message: >
+      [IMPORTANT] Tauri invoke call — ensure the corresponding Rust command
+      validates all fields in $ARGS. Never trust frontend-provided data on the
+      Rust side without explicit validation.
+    languages: [typescript]
+    severity: WARNING
+    paths:
+      include:
+        - "packages/desktop/src/**"

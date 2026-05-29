@@ -1,0 +1,180 @@
+# CodeRabbit configuration — cc-provider-gtw
+# Docs: https://docs.coderabbit.ai/guides/review-instructions
+
+language: "en-US"
+
+reviews:
+  profile: "assertive"
+  request_changes_workflow: true
+  high_level_summary: true
+  high_level_summary_placeholder: "@coderabbitai summary"
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - "master"
+
+  path_instructions:
+    - path: "packages/daemon/src/proxy/providers/**"
+      instructions: |
+        This is the most critical layer of the gateway. Review with maximum scrutiny.
+
+        **Architecture**
+        - Every provider must implement the provider interface correctly — check against registry.ts and provider-factory.ts
+        - New providers must be registered in both registry.ts and provider-factory.ts; flag any that aren't
+        - Direct instantiation of Provider/Transport classes outside of provider-factory.ts is a violation of the factory pattern — block it
+
+        **Error & resource handling**
+        - All network operations (HTTP, SSE) must have explicit timeout and error handling; flag any that rely on default Node.js behavior
+        - Streaming responses must handle client abort, backpressure, and cleanup (destroy/unpipe); missing cleanup is a blocking issue
+        - Unhandled stream 'error' events will crash the process — every stream must have an error handler
+
+        **Security**
+        - API keys and tokens must never appear in logs, error responses, or stack traces — this is a blocking issue
+        - Error responses must follow the format of the emulated provider (Anthropic/OpenAI) and must not leak internal details
+
+    - path: "packages/daemon/src/proxy/services/**"
+      instructions: |
+        Services are the core business logic. No mutable global state allowed.
+
+        **Design**
+        - Dependencies must be injected via constructor — no implicit singletons or globals
+        - Business logic must not leak into routes or middleware; flag any that does
+
+        **Correctness**
+        - All async operations must have explicit error handling — swallowed exceptions are a blocking issue
+        - MessageService transformations must preserve all required payload fields; flag any destructuring or mapping that could silently drop fields
+        - Empty catch blocks are never acceptable; at minimum, the error must be logged and re-thrown or converted to a typed error
+
+    - path: "packages/daemon/src/config/**"
+      instructions: |
+        Config is the public contract of the gateway. Changes here have downstream impact on all consumers.
+
+        **Schema correctness**
+        - Zod schemas must validate all required fields with descriptive error messages
+        - New fields must have sensible defaults; secrets must never have hardcoded defaults, even as examples
+        - `process.env` must only be read inside this layer — flag any direct access elsewhere
+
+        **Breaking changes**
+        - Any schema change that removes or renames a field is a breaking change — it must be documented in CHANGELOG.md
+        - Additive changes (new optional fields) are safe but still warrant a note in the walkthrough
+
+    - path: "packages/daemon/src/proxy/routes/**"
+      instructions: |
+        Routes are the public API surface. Anthropic/OpenAI compatibility is non-negotiable.
+
+        **Input validation**
+        - Every route must validate input with Zod before any processing — missing validation on a route is a blocking issue
+        - Validation errors must return the correct HTTP status (400) in the format of the emulated provider
+
+        **Security**
+        - Auth middleware must be applied consistently; any route without it must be intentional and justified
+        - Error responses (4xx/5xx) must never expose stack traces, internal paths, config values, or provider details
+        - Rate limiting must be present on any route that proxies to external LLM APIs
+
+    - path: "packages/daemon/src/proxy/middleware/**"
+      instructions: |
+        Middleware runs on every request — bugs here affect 100% of traffic.
+
+        - Middleware order is significant; changes to registration order require explicit justification
+        - Auth middleware must not be bypassable via edge-case header manipulation (missing header, empty string, whitespace)
+        - Synchronous heavy work in middleware blocks the event loop — flag CPU-bound operations without async offloading
+
+    - path: "packages/daemon/src/**/*.test.ts"
+      instructions: |
+        Tests are executable documentation — quality matters as much as in production code.
+
+        **Severity: blocking**
+        - Tests that only verify internal implementation details (not behavior) must be refactored
+        - Mocks must reflect the real interface contract; outdated mocks that diverge from the actual interface are a blocking issue
+
+        **Severity: important**
+        - Every test must cover at least one error/edge case in addition to the happy path
+        - Test names must describe the expected behavior clearly (e.g. "returns 401 when token is missing", not "auth test")
+
+        **Severity: minor**
+        - Avoid `any` in test files unless strictly necessary; prefer proper typed fixtures
+
+    - path: "packages/panel/src/**"
+      instructions: |
+        React frontend. Focus on correct integration with the daemon and safe handling of sensitive data.
+
+        **Security — blocking**
+        - API keys or tokens must never be stored in localStorage or sessionStorage without encryption
+        - Forms or inputs handling sensitive data must not log values to the console
+
+        **Correctness — important**
+        - All components that fetch data must handle loading, error, and empty states explicitly
+        - Config-related UI must reflect the actual Zod schema from packages/daemon/src/config — flag any hardcoded field assumptions
+
+        **Quality — minor**
+        - Components should not directly call fetch/axios — use the shared API hooks layer
+
+    - path: "packages/desktop/**"
+      instructions: |
+        Tauri app — different security surface than a browser.
+
+        **Security — blocking**
+        - Tauri commands exposed to the frontend must validate all inputs on the Rust side — never trust frontend-provided data
+        - tauri.conf.json allowlist must follow the principle of least privilege; flag any overly broad permissions (e.g. `all: true`)
+
+        **IPC — important**
+        - IPC calls between frontend and Rust backend must not transmit more data than strictly necessary
+
+  instructions: |
+    This is a TypeScript monorepo for a local LLM proxy gateway (daemon + React panel + Tauri desktop app).
+    The daemon acts as an Anthropic-compatible proxy that routes requests to multiple LLM providers
+    (OpenAI accounts, GitHub Copilot, Cline, Kilocode, CommandCode, etc.).
+
+    **Global standards — apply to every file in every PR**
+
+    Toolchain: TypeScript strict mode, Biome for linting/formatting (not ESLint/Prettier).
+    Do not flag style issues that Biome already enforces (indentation, quotes, semicolons, import order).
+
+    Architecture layers (from public surface inward):
+      routes → middleware → services → providers/transports → config
+
+    Cross-cutting rules:
+    - `process.env` may only be read inside `packages/daemon/src/config/` — flag any direct access elsewhere
+    - Secrets (API keys, tokens, passwords) must never appear in logs, error responses, or stack traces
+    - All async functions must have explicit error handling; swallowed exceptions are always a blocking issue
+    - Streaming (SSE/HTTP) code must handle client abort, backpressure, and stream errors explicitly
+    - New providers require changes in both `registry.ts` and `provider-factory.ts`; flag PRs that only touch one
+    - Config schema changes that remove or rename a field are breaking changes and must update CHANGELOG.md
+
+    Severity taxonomy used in path_instructions:
+    - **blocking**: must be fixed before merge
+    - **important**: should be fixed; flag clearly
+    - **minor**: worth noting but does not block
+
+  tools:
+    opengrep:
+      enabled: true
+
+  finishing_touches:
+    docstrings:
+      enabled: false
+
+knowledge_base:
+  opt_out: false
+  learnings:
+    scope: "local"
+  issues:
+    scope: "local"
+  pull_requests:
+    scope: "local"
+  web_search: true
+  code_guidelines:
+    patterns:
+      - "docs/ARCHITECTURE.md"
+      - "docs/ADDING_PROVIDER.md"
+      - "docs/CODEBASE_GUIDE.md"
+      - "docs/TESTING.md"
+      - "CONTRIBUTING.md"
+      - "SECURITY.md"
+
+chat:
+  auto_reply: true

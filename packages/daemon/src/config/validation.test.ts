@@ -63,6 +63,60 @@ test("normalizeConfig uses proxy defaults when proxy field is absent (legacy con
   assert.equal(normalized.tokenSavers.cavemanLevel, "lite");
 });
 
+test("normalizeConfig migrates the legacy Command Code endpoint", () => {
+  const defaults = buildDefaultConfig();
+  const config = {
+    ...defaults,
+    providers: {
+      ...defaults.providers,
+      commandcode: {
+        ...defaults.providers.commandcode,
+        baseUrl: "https://api.commandcode.ai/alpha/generate",
+      },
+    },
+  };
+
+  const normalized = normalizeConfig(config, defaults);
+
+  assert.equal(normalized.providers.commandcode.baseUrl, "https://api.commandcode.ai/provider/v1");
+});
+
+test("normalizeConfig preserves custom Command Code-compatible endpoint overrides", () => {
+  const defaults = buildDefaultConfig();
+  const config = {
+    ...defaults,
+    providers: {
+      ...defaults.providers,
+      commandcode: {
+        ...defaults.providers.commandcode,
+        baseUrl: "https://proxy.example/commandcode/v1",
+      },
+    },
+  };
+
+  const normalized = normalizeConfig(config, defaults);
+
+  assert.equal(normalized.providers.commandcode.baseUrl, "https://proxy.example/commandcode/v1");
+});
+
+test("normalizeConfig drops legacy manually configured Command Code models", () => {
+  const defaults = buildDefaultConfig();
+  const config = {
+    ...defaults,
+    providers: {
+      ...defaults.providers,
+      commandcode: {
+        ...defaults.providers.commandcode,
+        models: ["deepseek/deepseek-v4-pro", "claude-sonnet-4-6"],
+      },
+    },
+  };
+
+  const normalized = normalizeConfig(config, defaults);
+
+  assert.deepEqual(normalized.providers.commandcode.models, []);
+});
+
 test("normalizeConfig preserves proxy config when present", () => {
   const defaults = buildDefaultConfig();
   const config = { ...defaults, proxy: { enabled: true, url: "http://127.0.0.1:7890" } };
