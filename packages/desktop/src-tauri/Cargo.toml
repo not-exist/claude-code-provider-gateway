@@ -1,7 +1,11 @@
 [package]
 name = "claude-code-provider-gateway-desktop"
 version = "0.2.3"
-description = "Claude Code Provider Gateway — desktop shell"
+description = "Claude Code Provider Gateway desktop app"
+authors = ["Daniel Luiz Alves <daniel.xcoders@gmail.com>"]
+license = "MIT"
+repository = "https://github.com/danielalves96/cc-provider-gtw"
+homepage = "https://github.com/danielalves96/cc-provider-gtw"
 edition = "2021"
 rust-version = "1.77"
 

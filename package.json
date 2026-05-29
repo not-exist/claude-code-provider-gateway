@@ -2,6 +2,15 @@
   "name": "claude-code-provider-gateway",
   "version": "0.2.3",
   "description": "Claude Code Gateway — proxy Anthropic-compatible para múltiplos providers de LLM",
+  "author": "Daniel Luiz Alves <daniel.xcoders@gmail.com>",
+  "homepage": "https://github.com/danielalves96/cc-provider-gtw#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danielalves96/cc-provider-gtw.git"
+  },
+  "bugs": {
+    "url": "https://github.com/danielalves96/cc-provider-gtw/issues"
+  },
   "private": true,
   "scripts": {
     "build": "(cd packages/panel && npm run build) && (cd packages/daemon && npm run build)",
