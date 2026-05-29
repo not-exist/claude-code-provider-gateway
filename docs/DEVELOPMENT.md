@@ -311,7 +311,7 @@ For a single daemon test file:
 
 ```bash
 cd packages/daemon
-node --import tsx --test src/proxy/providers/commandcode.test.ts
+node --import tsx --test src/proxy/providers/commandcode/index.test.ts
 ```
 
 Manual provider validation path:

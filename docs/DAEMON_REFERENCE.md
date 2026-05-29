@@ -100,11 +100,8 @@ packages/daemon/src/
 │   │   │   ├── catalog.ts       # listOpenAIAccountModels() + local cache
 │   │   │   ├── responses.ts     # buildOpenAIAccountResponsesRequest()
 │   │   │   └── stream.ts        # Responses API SSE → Anthropic SSE transformer
-│   │   ├── commandcode/         # CommandCode provider
-│   │   │   ├── index.ts         # CommandCodeProvider class
-│   │   │   ├── conversion.ts    # anthropicToCommandCode() — request format conversion
-│   │   │   ├── models.ts        # COMMANDCODE_MODELS catalog, prefix stripping
-│   │   │   └── stream.ts        # commandCodeStreamToAnthropic() SSE transformer
+│   │   ├── commandcode/         # CommandCode dual-endpoint Provider API integration
+│   │   │   └── index.ts         # CommandCodeProvider class + /provider/v1/models discovery
 │   │   ├── kilocode/            # KiloCode provider
 │   │   │   ├── index.ts         # KiloCodeProvider class
 │   │   │   └── auth.ts          # Device flow helpers
@@ -657,7 +654,7 @@ The daemon ships with a built-in provider catalog and also supports user-created
 | KiloCode | `kilocode/` | OAuth (device flow) | Device flow with org-id resolution |
 | Kiro | `declarative.ts` | OAuth (coming soon) | OAuth stub — returns 501 until implemented |
 | iFlow | `declarative.ts` | OAuth (coming soon) | OAuth stub — returns 501 until implemented |
-| CommandCode | `commandcode/` | API key | Custom API integration with separate model catalog, request conversion, and stream transformation modules |
+| CommandCode | `commandcode/` | API key | Provider API with live `/provider/v1/models` discovery; Claude models use `/messages`, non-Claude models use `/chat/completions` |
 
 ### Transport Layer
 

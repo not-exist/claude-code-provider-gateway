@@ -55,13 +55,15 @@ export function ProviderConfigContent({
 
   const discoveryDone = !loading && models !== null;
   const discoveredEmpty = discoveryDone && models.length === 0;
+  const supportsManualModels = provider.id !== "commandcode";
 
   // Show picker when: API key provider, ready, discovery returned nothing.
   // Also always show if already has manually configured models (so they're editable).
   const showPicker =
-    provider.custom ||
-    (providerKind === "api-key" &&
-      ((discoveredEmpty && ready) || (provider.models ?? []).length > 0));
+    supportsManualModels &&
+    (provider.custom ||
+      (providerKind === "api-key" &&
+        ((discoveredEmpty && ready) || (provider.models ?? []).length > 0)));
 
   const apiKeySection = providerKind === "api-key" && (
     <ApiKeySection

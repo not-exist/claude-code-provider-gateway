@@ -65,7 +65,7 @@ favorites, icons, suggested models, and OAuth-specific controls.
 | Blackbox AI | `blackbox` | OpenAI Chat |
 | HuggingFace Router | `huggingface` | OpenAI Chat |
 | Ollama Cloud | `ollama_cloud` | OpenAI Chat |
-| Command Code | `commandcode` | Custom AI SDK v5 NDJSON stream |
+| Command Code | `commandcode` | Command Code Provider API (Anthropic Messages for Claude, OpenAI Chat for non-Claude models) |
 
 ### Local Providers
 
