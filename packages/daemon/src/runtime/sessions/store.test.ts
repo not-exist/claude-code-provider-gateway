@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, mkdirSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test, { afterEach, beforeEach } from "node:test";
@@ -184,4 +184,56 @@ test("archiveSession trims to MAX_SESSIONS after overflow", async () => {
   }
   const list = listArchivedSessions();
   assert.ok(list.length <= 200);
+});
+
+test("archiveSession compacts oversized request payloads", async () => {
+  const { archiveSession, listArchivedSessions } = await import("./store.js");
+  archiveSession(
+    makeSession({
+      id: "large_payload",
+      requestLog: [
+        {
+          id: "req_1",
+          timestamp: Date.now(),
+          requestedModel: "model",
+          providerId: "ollama",
+          providerModel: "model",
+          inputTokens: 0,
+          latencyMs: 0,
+          status: "ok",
+          error: null,
+          prompt: "p".repeat(25_000),
+          response: "r".repeat(25_000),
+          requestPreview: {
+            transport: "openai_chat",
+            method: "POST",
+            url: "http://example.test",
+            headers: {},
+            body: { messages: ["m".repeat(60_000)] },
+          },
+        },
+      ],
+    }),
+  );
+
+  const [session] = listArchivedSessions();
+  const [entry] = session?.requestLog ?? [];
+  assert.equal(session?.id, "large_payload");
+  assert.ok((entry?.prompt?.length ?? 0) < 21_000);
+  assert.ok((entry?.response?.length ?? 0) < 21_000);
+  assert.equal(typeof entry?.requestPreview?.body, "string");
+});
+
+test("listArchivedSessions reads a bounded archive tail", async () => {
+  const { getSessionArchivePath } = await import("../../config/paths.js");
+  const { listArchivedSessions } = await import("./store.js");
+  const small = makeSession({ id: "tail_session", status: "completed", endedAt: Date.now() });
+  writeFileSync(
+    getSessionArchivePath(),
+    `${"x".repeat(11 * 1024 * 1024)}\n${JSON.stringify(small)}\n`,
+  );
+
+  const list = listArchivedSessions();
+  assert.equal(list.length, 1);
+  assert.equal(list[0]?.id, "tail_session");
 });
