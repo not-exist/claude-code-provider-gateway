@@ -44,6 +44,11 @@
       "icons/icon.ico"
     ],
     "externalBin": ["binaries/claude-code-provider-gateway-daemon"],
+    "windows": {
+      "wix": {
+        "license": "../../../LICENSE.rtf"
+      }
+    },
     "linux": {
       "deb": {
         "section": "devel",
