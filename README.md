@@ -17,6 +17,8 @@ Run Claude Code through OpenAI Account, GitHub Copilot, OpenRouter, DeepSeek, Gr
 
 **Free, open source, and local-first.**
 
+[ccpg.live](https://ccpg.live) · **[Documentation](https://ccpg.live/docs)** · [Download](https://ccpg.live/download)
+
 </div>
 
 <p align="center">
@@ -93,7 +95,7 @@ install app → add provider → test connection → run Claude Code through CCP
 
 The production path is desktop-only: users should not need Node.js, npm, Rust, Bun, or hand-edited terminal config.
 
-The next documentation step is a separate official docs site repository. Until then, start with the [documentation hub](docs/README.md) or jump directly to:
+The official documentation is at **[ccpg.live/docs](https://ccpg.live/docs)**. The repo also keeps the full Markdown docs in [`docs/`](docs/README.md) if you prefer reading them here:
 
 - [Getting Started](docs/GETTING-STARTED.md)
 - [Providers](docs/PROVIDERS.md)
@@ -295,7 +297,7 @@ Source development needs Node.js, npm workspaces, Bun, Rust, and Tauri system de
 
 Download the latest desktop build from:
 
-[GitHub Releases](https://github.com/danielalves96/claude-code-provider-gateway/releases)
+**[ccpg.live/download](https://ccpg.live/download)** — or directly from [GitHub Releases](https://github.com/danielalves96/claude-code-provider-gateway/releases)
 
 Then:
 
@@ -457,6 +459,8 @@ Runtime files live in:
 | `sessions.jsonl` | Completed session archive, capped to 200 sessions. |
 
 ## Documentation
+
+The full documentation is available at **[ccpg.live/docs](https://ccpg.live/docs)**. The Markdown sources are also kept in this repo under [`docs/`](docs/README.md) as a local alternative.
 
 | Document | Use it for |
 |---|---|
