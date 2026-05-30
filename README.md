@@ -17,7 +17,7 @@ Run Claude Code through OpenAI Account, GitHub Copilot, OpenRouter, DeepSeek, Gr
 
 **Free, open source, and local-first.**
 
-[ccpg.live](https://ccpg.live) · **[Documentation](https://ccpg.live/docs)** · [Download](https://ccpg.live/download)
+**[Website](https://ccpg.live)** · **[Documentation](https://ccpg.live/docs)** · **[Download](https://ccpg.live/download)**
 
 </div>
 
