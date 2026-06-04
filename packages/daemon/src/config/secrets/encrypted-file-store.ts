@@ -16,6 +16,7 @@ const NONCE_BYTES = 12;
 
 export class EncryptedFileSecretStore implements SecretStore {
   private cache: Cache;
+  private decryptErrors: Set<string> = new Set();
 
   constructor(
     private readonly filePath: string,
@@ -34,10 +35,14 @@ export class EncryptedFileSecretStore implements SecretStore {
       return this.decrypt(entry);
     } catch {
       // Corrupt or wrongly-keyed entry (e.g. left over from a previous master
-      // key). Treat as missing so a single bad secret can't take down config
-      // load — the user re-enters that one credential via the UI.
+      // key). Track separately so callers can detect key-mismatch vs missing.
+      this.decryptErrors.add(key);
       return null;
     }
+  }
+
+  getDecryptErrorKeys(): string[] {
+    return [...this.decryptErrors];
   }
 
   set(key: string, value: string): void {

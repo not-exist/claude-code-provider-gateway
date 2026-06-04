@@ -3,6 +3,8 @@ export interface SecretStore {
   set(key: string, value: string): void;
   delete(key: string): void;
   keys(): string[];
+  /** Keys that exist in the store but could not be decrypted (wrong master key). */
+  getDecryptErrorKeys(): string[];
 }
 
 // Dotted paths used as keys, scoped by domain so collisions are impossible.

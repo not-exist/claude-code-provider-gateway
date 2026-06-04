@@ -124,7 +124,37 @@ export function loadConfig(): Config {
     }
 
     hydrateSecretsFromStore(merged, store);
-    if (!hasStoredAuthToken) saveConfig(merged);
+
+    const decryptErrorKeys = store.getDecryptErrorKeys();
+    if (decryptErrorKeys.length > 0) {
+      // Master key changed (reinstall / keychain reset). The stored ciphertext
+      // is unrecoverable — clear it so future saves write fresh entries.
+      console.warn(
+        `[config] ${decryptErrorKeys.length} secret(s) could not be decrypted; master key may have changed after reinstall. Clearing affected entries.`,
+      );
+      for (const key of decryptErrorKeys) {
+        store.delete(key);
+      }
+      // Disable providers whose credentials are now gone so the UI gives a
+      // clear signal (disabled) rather than silently failing with an empty key.
+      for (const id of Object.keys(merged.providers)) {
+        const provider = merged.providers[id];
+        if (!provider?.enabled) continue;
+        const hasApiKey = !!provider.apiKey;
+        const hasOAuth = !!(
+          provider.oauth?.accessToken ||
+          provider.oauth?.refreshToken ||
+          provider.oauth?.copilotToken
+        );
+        if (!hasApiKey && !hasOAuth) {
+          provider.enabled = false;
+        }
+      }
+      saveConfig(merged);
+    } else if (!hasStoredAuthToken) {
+      saveConfig(merged);
+    }
+
     return merged;
   } catch {
     return buildDefaultConfig();
