@@ -159,14 +159,13 @@ function messageToOpenAI(msg: Message, ctx: ConversionContext, index: number): O
     }
   }
 
-  const result: OpenAIMessage[] = [];
+  const result: OpenAIMessage[] = [...toolResultMessages];
   if (otherBlocks.length > 0) {
     result.push({
       role: "user",
       content: contentBlocksToOpenAI(otherBlocks, ctx, `messages[${index}].content`),
     });
   }
-  result.push(...toolResultMessages);
   return result;
 }
 

@@ -46,3 +46,44 @@ test("anthropicToOpenAIWithWarnings reports dropped and translated Anthropic-onl
   assert.ok(codes.includes("cache_control_metadata_dropped"));
   assert.ok(codes.includes("tool_choice_any_translated"));
 });
+
+test("anthropicToOpenAIWithWarnings keeps tool results immediately after tool calls", () => {
+  const req: MessagesRequest = {
+    model: "claude-haiku",
+    max_tokens: 100,
+    messages: [
+      {
+        role: "assistant",
+        content: [
+          {
+            type: "tool_use",
+            id: "toolu_123",
+            name: "Read",
+            input: { file_path: "README.md" },
+          },
+        ],
+      },
+      {
+        role: "user",
+        content: [
+          {
+            type: "tool_result",
+            tool_use_id: "toolu_123",
+            content: "file contents",
+          },
+          {
+            type: "text",
+            text: "Please continue.",
+          },
+        ],
+      },
+    ],
+  };
+
+  const { request } = anthropicToOpenAIWithWarnings(req, "gpt-test");
+
+  assert.equal(request.messages[0]?.role, "assistant");
+  assert.equal(request.messages[1]?.role, "tool");
+  assert.equal(request.messages[1]?.tool_call_id, "toolu_123");
+  assert.equal(request.messages[2]?.role, "user");
+});

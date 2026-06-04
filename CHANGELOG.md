@@ -4,6 +4,11 @@ All notable changes to Claude Code Provider Gateway will be documented here.
 
 Release notes track the local desktop gateway, daemon, panel, providers, and documentation changes.
 
+## v0.2.4
+
+### Fixed
+- **Tool result message ordering** — when a user turn contained both `tool_result` blocks and regular `text` blocks, the converted OpenAI messages were emitted in the wrong order: the `user` text message appeared before the `tool` result message, violating the OpenAI message sequence contract (tool results must immediately follow the assistant tool-call). The conversion now emits tool result messages first, then any remaining user text, so the `assistant → tool → user` ordering is always preserved.
+
 ## v0.2.3
 
 ### Added
