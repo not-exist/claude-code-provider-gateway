@@ -1,11 +1,14 @@
 import { randomBytes } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { writePrivateFile } from "../core/files/private-file.js";
+import { logger } from "../observability/log.js";
+import { isSqliteStorageEnabled, readConfigJson, writeConfigJson } from "../storage/sqlite.js";
 import { getConfigPath, getMasterKeyPath, getSecretsPath } from "./paths.js";
 import type { BuiltInProviderId, Config, ProviderConfig } from "./schema.js";
 import { OAUTH_PROVIDER_IDS, PROVIDER_DEFAULTS, PROVIDER_IDS } from "./schema.js";
 import { extractSecretsToStore, hydrateSecretsFromStore } from "./secrets/config-splitter.js";
 import { EncryptedFileSecretStore } from "./secrets/encrypted-file-store.js";
+import { EncryptedSqliteSecretStore } from "./secrets/encrypted-sqlite-store.js";
 import { resolveMasterKey } from "./secrets/master-key.js";
 import type { SecretStore } from "./secrets/store.js";
 import { SECRET_KEYS } from "./secrets/store.js";
@@ -28,7 +31,9 @@ let cachedSecretStore: SecretStore | null = null;
 export function getSecretStore(): SecretStore {
   if (cachedSecretStore) return cachedSecretStore;
   const { key } = resolveMasterKey(getMasterKeyPath());
-  cachedSecretStore = new EncryptedFileSecretStore(getSecretsPath(), key);
+  cachedSecretStore = isSqliteStorageEnabled()
+    ? new EncryptedSqliteSecretStore(key)
+    : new EncryptedFileSecretStore(getSecretsPath(), key);
   return cachedSecretStore;
 }
 
@@ -59,9 +64,9 @@ function buildDefaultProviders(): Record<string, ProviderConfig> {
 export function buildDefaultConfig(): Config {
   return {
     server: {
-      proxyPort: 49250,
-      panelPort: 6767,
-      authToken: `sk_${randomBytes(16).toString("hex")}`,
+      proxyPort: readPortEnv("CCPG_PROXY_PORT", 49250),
+      panelPort: readPortEnv("CCPG_PANEL_PORT", 6767),
+      authToken: process.env.CCPG_AUTH_TOKEN || `sk_${randomBytes(16).toString("hex")}`,
     },
     providers: buildDefaultProviders(),
     routing: {
@@ -101,26 +106,27 @@ export function buildDefaultConfig(): Config {
 }
 
 export function loadConfig(): Config {
-  const path = getConfigPath();
+  const rawConfig = readStoredConfig();
   const store = getSecretStore();
 
-  if (!existsSync(path)) {
+  if (!rawConfig) {
     const fresh = buildDefaultConfig();
     saveConfig(fresh);
     return fresh;
   }
 
   try {
-    const raw = readFileSync(path, "utf-8");
-    const parsed = JSON.parse(raw) as Partial<Config>;
+    const parsed = JSON.parse(rawConfig) as Partial<Config>;
     const defaults = buildDefaultConfig();
-    const merged = normalizeConfig(deepMerge(defaults, parsed) as Config, defaults);
+    const merged = applyRuntimeEnvOverrides(
+      normalizeConfig(deepMerge(defaults, parsed) as Config, defaults),
+    );
     const hasStoredAuthToken = store.get(SECRET_KEYS.serverAuthToken) !== null;
 
     // One-shot migration: legacy JSON has secrets inline → move them into the store.
     if (parsedJsonStillHasSecrets(parsed)) {
       extractSecretsToStore(merged, store);
-      writePrivateFile(path, JSON.stringify(merged, null, 2));
+      writeStoredConfig(JSON.stringify(merged, null, 2));
     }
 
     hydrateSecretsFromStore(merged, store);
@@ -129,8 +135,9 @@ export function loadConfig(): Config {
     if (decryptErrorKeys.length > 0) {
       // Master key changed (reinstall / keychain reset). The stored ciphertext
       // is unrecoverable — clear it so future saves write fresh entries.
-      console.warn(
-        `[config] ${decryptErrorKeys.length} secret(s) could not be decrypted; master key may have changed after reinstall. Clearing affected entries.`,
+      logger.warn(
+        "config",
+        `${decryptErrorKeys.length} secret(s) could not be decrypted; master key may have changed after reinstall. Clearing affected entries.`,
       );
       for (const key of decryptErrorKeys) {
         store.delete(key);
@@ -166,11 +173,41 @@ export function saveConfig(config: Config): void {
   // secrets still populated for in-process use.
   const onDisk = structuredClone(config);
   extractSecretsToStore(onDisk, getSecretStore());
-  writePrivateFile(getConfigPath(), JSON.stringify(onDisk, null, 2));
+  writeStoredConfig(JSON.stringify(onDisk, null, 2));
 }
 
 export function isFirstRun(): boolean {
-  return !existsSync(getConfigPath());
+  return readStoredConfig() === null;
+}
+
+function readStoredConfig(): string | null {
+  if (isSqliteStorageEnabled()) return readConfigJson();
+  const path = getConfigPath();
+  if (!existsSync(path)) return null;
+  return readFileSync(path, "utf-8");
+}
+
+function writeStoredConfig(value: string): void {
+  if (isSqliteStorageEnabled()) {
+    writeConfigJson(value);
+    return;
+  }
+  writePrivateFile(getConfigPath(), value);
+}
+
+function readPortEnv(name: string, fallback: number): number {
+  const value = process.env[name];
+  if (!value) return fallback;
+  const port = Number.parseInt(value, 10);
+  if (!Number.isInteger(port) || port < 1 || port > 65_535) return fallback;
+  return port;
+}
+
+function applyRuntimeEnvOverrides(config: Config): Config {
+  config.server.proxyPort = readPortEnv("CCPG_PROXY_PORT", config.server.proxyPort);
+  config.server.panelPort = readPortEnv("CCPG_PANEL_PORT", config.server.panelPort);
+  if (process.env.CCPG_AUTH_TOKEN) config.server.authToken = process.env.CCPG_AUTH_TOKEN;
+  return config;
 }
 
 function parsedJsonStillHasSecrets(config: Partial<Config>): boolean {

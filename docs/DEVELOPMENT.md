@@ -43,6 +43,38 @@ This starts two processes concurrently via `concurrently`:
 
 The Vite dev server proxies `/api/*` requests to the daemon on `127.0.0.1:6767`.
 
+### Docker/Web Mode
+
+The repository also supports a browser-based runtime through Docker Compose:
+
+```bash
+docker compose up -d --build
+```
+
+This builds the React panel into `packages/daemon/dist/static`, starts the
+daemon in a Node 24 container, and serves both the panel UI and panel API from
+the daemon's panel server.
+
+| Container setting | Value |
+|---|---|
+| Panel UI/API | `http://localhost:6767` |
+| Gateway API | `http://localhost:49250/v1` |
+| Storage backend | SQLite |
+| SQLite path | `/data/ccpg.sqlite` |
+| Persistent volume | `ccpg_data:/data` |
+
+Docker/Web sets `CC_GATEWAY_BIND_HOST=0.0.0.0` so the published ports are
+reachable from the host. The desktop and source dev paths keep the daemon bound
+to `127.0.0.1`.
+
+Useful commands:
+
+```bash
+docker compose logs -f
+docker compose down
+docker compose down -v # also removes SQLite state
+```
+
 ### Desktop Development Details
 
 ```bash
@@ -64,6 +96,8 @@ claude-code-provider-gateway/
 │   ├── daemon/               # Core proxy daemon (TypeScript)
 │   ├── panel/                # React SPA management panel
 │   └── desktop/              # Tauri v2 desktop shell (Rust)
+├── Dockerfile                # Docker/Web production image
+├── docker-compose.yml        # Browser-based Docker runtime
 ├── docs/                     # Documentation
 ├── scripts/                  # Release utilities (bump-version.sh)
 └── package.json              # npm workspaces root

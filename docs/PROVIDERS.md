@@ -104,7 +104,7 @@ Uploaded logos are stored locally in
 ## CLI Flags
 
 Provider flags are defined in `packages/daemon/src/config/schema.ts`. They are
-case-insensitive in the shell setup flow.
+case-insensitive in the Terminal Integration flow.
 
 | Provider | Flags |
 |---|---|

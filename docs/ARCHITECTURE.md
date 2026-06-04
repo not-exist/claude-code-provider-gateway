@@ -6,11 +6,11 @@
 
 Claude Code Provider Gateway (CCPG) is a **local-first, desktop-hosted gateway** that interposes an Anthropic Messages API-compatible proxy between Claude Code and any of 40+ LLM providers, while also exposing an OpenAI-compatible local `/v1` gateway for external tools. The system is organized as a monorepo with three packages:
 
-- **Daemon** — A TypeScript/Node.js backend that runs two Hono HTTP servers on `127.0.0.1`: an Anthropic/OpenAI-compatible proxy API and a web panel API.
+- **Daemon** — A TypeScript/Node.js backend that runs two Hono HTTP servers: an Anthropic/OpenAI-compatible proxy API and a web panel API. It binds to `127.0.0.1` by default for desktop/local use, or to `CC_GATEWAY_BIND_HOST` in Docker/Web mode.
 - **Panel** — A React 19 SPA (Ant Design, Zustand, React Router) that serves as the configuration UI, live session viewer, and provider management dashboard.
 - **Desktop** — A Rust/Tauri 2 shell that packages the daemon as a sidecar process and wraps the panel in a native window, delivering a zero-command-line desktop experience.
 
-The architectural style is **layered**: the daemon is split into configuration, runtime, proxy (routing → providers → transport), panel (API + static serving), and observability layers. The desktop shell adds a supervisor layer that manages the daemon lifecycle.
+The architectural style is **layered**: the daemon is split into configuration, runtime, proxy (routing → providers → transport), panel (API + static serving), storage, and observability layers. The desktop shell adds a supervisor layer that manages the daemon lifecycle. Docker/Web uses the same daemon and panel artifacts, but supervises them through the container runtime and uses SQLite for persisted state.
 
 ## High-Level Architecture
 
@@ -27,8 +27,8 @@ The architectural style is **layered**: the daemon is split into configuration, 
                        │  │ REST API + React SPA files  │  │
                        │  └─────────────────────────────┘  │
                        │  ┌─────────────────────────────┐  │
-                       │  │ Filesystem                  │  │
-                       │  │ Config · Secrets · Sessions │  │
+                       │  │ Storage                     │  │
+                       │  │ Files or SQLite             │  │
                        │  └─────────────────────────────┘  │
                        └───────────────────────────────────┘
 ```
@@ -146,7 +146,44 @@ class DaemonRuntime {
 }
 ```
 
-Both servers bind to `127.0.0.1` only. This keeps the gateway off the network, but it does not remove the need for local request authentication.
+Both servers bind to `127.0.0.1` by default. This keeps the gateway off the
+network in desktop and source development modes, but it does not remove the
+need for local request authentication. Docker/Web sets
+`CC_GATEWAY_BIND_HOST=0.0.0.0` so Docker port publishing can expose the panel
+and gateway to the host.
+
+### Docker/Web Runtime
+
+Docker/Web is a parallel runtime, not a replacement for the Tauri app. The
+Docker image builds the panel with Vite, stores the static assets in the
+daemon's `dist/static` directory, and starts the same Node daemon entrypoint
+used by the sidecar source.
+
+Runtime differences are isolated through environment variables:
+
+| Difference | Desktop default | Docker/Web |
+|---|---|---|
+| Daemon owner | Tauri sidecar supervisor | Docker container |
+| Panel surface | Tauri webview | Browser at `http://localhost:6767` |
+| Bind host | `127.0.0.1` | `0.0.0.0` inside the container |
+| Storage backend | Files in the user config dir | SQLite at `/data/ccpg.sqlite` |
+| Persistence | OS user config directory | Docker volume `ccpg_data` |
+
+The panel API client resolves to relative `/api` URLs outside Tauri, so the
+browser UI talks to the same panel server that serves the static files.
+
+### Storage Layer
+
+The daemon has two persistence backends:
+
+| Backend | Selected by | Stores |
+|---|---|---|
+| File | Default | `config.json`, `secrets.enc.json`, active session checkpoint, session JSONL archive |
+| SQLite | `CCPG_STORAGE_BACKEND=sqlite` or `CCPG_SQLITE_PATH` | Config document, encrypted secret entries, active sessions, archived sessions |
+
+Secrets keep the same AES-256-GCM envelope in both backends. SQLite mode only
+changes where encrypted payloads and session documents are stored; business
+logic continues to use the same config, provider, and session types.
 
 ### 2. Proxy Layer (`packages/daemon/src/proxy/`)
 
@@ -682,7 +719,7 @@ OpenAI client
 | Threat | Mitigation |
 |---|---|
 | Unauthorized proxy access | Gateway token validation on every proxy request. Claude Code uses `x-api-key`; OpenAI-compatible clients may use `Authorization: Bearer <token>` or `x-api-key`. |
-| Network exposure | Both servers bind to `127.0.0.1` only |
+| Network exposure | Both servers bind to `127.0.0.1` by default; Docker/Web must explicitly set `CC_GATEWAY_BIND_HOST=0.0.0.0` for published ports. |
 | Secrets at rest | AES-256-GCM encryption, random IV per write |
 | OAuth token theft | Tokens encrypted in store, auto-refreshed |
 | Cross-origin panel access | Origin allowlist (Tauri webview + Vite dev server only). Sensitive endpoints additionally require a valid Bearer/x-api-key token regardless of origin. |
@@ -733,4 +770,15 @@ Desktop Build (GitHub Actions — .github/workflows/desktop-build.yml, on tag pu
 ├── daemon.log               # Log output (rotating buffer)
 ├── current-session.json     # Active sessions (checkpointed every 10s)
 └── sessions.jsonl           # Session archive (append-only, max 200)
+```
+
+Docker/Web stores runtime state under the `/data` volume:
+
+```text
+/data/
+├── ccpg.sqlite              # Config, encrypted secrets, active sessions, archived sessions
+├── secret.key               # Master encryption key when CC_GATEWAY_SECRET_KEY is not supplied
+├── provider-logos/          # Uploaded custom provider PNG/WebP logos
+├── daemon.pid               # Process ID
+└── daemon.log               # Log output when file logging is used
 ```

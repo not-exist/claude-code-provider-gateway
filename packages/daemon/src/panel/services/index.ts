@@ -8,6 +8,7 @@ export {
   shellQuote,
 } from "./launch-prepare.js";
 export {
+  canUseHostShellIntegration,
   getShellSetup,
   getSnippetForShell,
   type InstallResult,

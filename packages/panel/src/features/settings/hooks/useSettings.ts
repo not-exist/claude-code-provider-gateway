@@ -30,6 +30,7 @@ export function useSettings() {
   const [webTools, setWebTools] = useState<WebToolsConfig>(DEFAULT_WEB_TOOLS);
   const [proxy, setProxy] = useState<ProxyConfig>(DEFAULT_PROXY);
   const [tokenSavers, setTokenSavers] = useState<TokenSaversConfig>(DEFAULT_TOKEN_SAVERS);
+  const [runtimeMode, setRuntimeMode] = useState<"host" | "container">("host");
   const [loaded, setLoaded] = useState(false);
   const { saving, saved, wrap } = useSaveFeedback();
 
@@ -41,6 +42,7 @@ export function useSettings() {
         setWebTools(c.webTools);
         setProxy(c.proxy);
         setTokenSavers(c.tokenSavers);
+        setRuntimeMode(c.runtime.mode);
       })
       .finally(() => setLoaded(true));
   }, [serverForm]);
@@ -54,7 +56,7 @@ export function useSettings() {
     setTokenSavers((t) => ({ ...t, ...patch }));
 
   const save = () => {
-    const nextServer = serverForm.getFieldsValue();
+    const nextServer = runtimeMode === "container" ? {} : serverForm.getFieldsValue();
     return wrap(() => settingsService.save(nextServer, webTools, proxy, tokenSavers));
   };
 
@@ -66,6 +68,7 @@ export function useSettings() {
     updateProxy,
     tokenSavers,
     updateTokenSavers,
+    runtimeMode,
     loaded,
     saving,
     saved,

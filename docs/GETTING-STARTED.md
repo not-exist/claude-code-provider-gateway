@@ -14,6 +14,14 @@
 | Claude Code | Installed and runnable as `claude` from your shell |
 | Disk space | ~200 MB for the installed app |
 
+**For users (Docker/Web mode):**
+
+| Requirement | Details |
+|---|---|
+| Docker | Docker Engine with Docker Compose v2 |
+| Claude Code | Installed on the host if you want to launch Claude Code through the gateway |
+| Disk space | A small named Docker volume for SQLite state |
+
 **For source development:**
 
 | Requirement | Details |
@@ -40,9 +48,50 @@
 
 3. Open the **Providers** tab, configure at least one built-in provider or add a custom OpenAI/Anthropic-compatible provider, and click **Test** to verify the connection works.
 
-4. Go to **Dashboard → Shell Setup** and install the `ccpg` shell command. Follow the setup wizard for your shell (zsh, bash, or fish).
+4. Go to **Dashboard -> Terminal Integration** and install the `ccpg` shell command. Follow the setup wizard for your shell (zsh, bash, or fish).
 
 5. Relaunch your terminal so the new `ccpg` function takes effect.
+
+### Docker/Web App
+
+Docker/Web runs the same panel and daemon in a container and opens the UI in
+your browser. It is useful when you do not want to install the desktop app.
+
+```bash
+git clone https://github.com/danielalves96/claude-code-provider-gateway.git
+cd claude-code-provider-gateway
+docker compose up -d --build
+```
+
+Open `http://localhost:6767` in your browser.
+
+Docker/Web publishes:
+
+| Service | URL |
+|---|---|
+| Panel UI and panel API | `http://localhost:6767` |
+| OpenAI/Anthropic-compatible gateway | `http://localhost:49250/v1` |
+
+State is persisted in the `ccpg_data` volume. For ports, environment variables,
+Terminal Integration, backups, reverse proxy setup, and troubleshooting, see the
+[Docker/Web Guide](DOCKER.md).
+
+In Docker/Web mode, **Terminal Integration** cannot auto-install into your host
+shell because the daemon runs inside the container. Open **Dashboard -> Terminal
+Integration**, copy the manual command for your shell, and run it in a terminal
+on the host system.
+
+To stop the container:
+
+```bash
+docker compose down
+```
+
+To remove persisted Docker/Web state as well:
+
+```bash
+docker compose down -v
+```
 
 ### Source Development
 
@@ -55,7 +104,8 @@ npm install
 npm run dev:desk
 ```
 
-This starts the desktop app with hot-reload daemon, panel Vite dev server, and Tauri window. See [Development](DEVELOPMENT.md) for the full guide.
+This starts the desktop app with hot-reload daemon, panel Vite dev server, and
+Tauri window. See [Development](DEVELOPMENT.md) for the full guide.
 
 ## First Run
 

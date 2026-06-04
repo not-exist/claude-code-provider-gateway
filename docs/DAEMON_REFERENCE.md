@@ -4,7 +4,7 @@
 
 ## Overview
 
-The **daemon** (`@claude-code-provider-gateway/daemon`) is the backend process of CCPG, implemented in TypeScript. It runs two local HTTP servers — a **proxy API** (port `49250`) that speaks both the Anthropic Messages API and an OpenAI-compatible `/v1` gateway, and a **panel API** (port `6767`) that serves the configuration web UI and REST endpoints. Both servers bind to `127.0.0.1` only.
+The **daemon** (`@claude-code-provider-gateway/daemon`) is the backend process of CCPG, implemented in TypeScript. It runs two HTTP servers — a **proxy API** (port `49250`) that speaks both the Anthropic Messages API and an OpenAI-compatible `/v1` gateway, and a **panel API** (port `6767`) that serves the configuration web UI and REST endpoints. Both servers bind to `127.0.0.1` by default; Docker/Web can set `CC_GATEWAY_BIND_HOST=0.0.0.0` so Docker port publishing reaches them.
 
 The daemon's primary job is to intercept Claude Code API requests and optional OpenAI-compatible local client requests, route them to a built-in or user-created LLM provider, translate between Anthropic and OpenAI API formats, and stream responses back in the caller's protocol. It also provides session tracking, runtime stats, live logging, and a full configuration API consumed by the panel frontend.
 
@@ -26,7 +26,7 @@ configureOutboundNetwork(config.proxy.enabled ? config.proxy.url : undefined);
 startDaemon(config);
 ```
 
-1. **`loadConfig()`** — Reads `config.json` from `~/.config/claude-code-provider-gateway/` (or creates it on first run with sensible defaults), hydrates encrypted secrets from the on-disk store, and validates all fields.
+1. **`loadConfig()`** — Reads persisted config from the selected storage backend (file mode by default, SQLite when `CCPG_STORAGE_BACKEND=sqlite` or `CCPG_SQLITE_PATH` is set), hydrates encrypted secrets, applies runtime env overrides, and validates all fields.
 
 2. **`configureOutboundNetwork()`** — If the user has configured an HTTP/HTTPS proxy (e.g., corporate network), sets the global `undici` dispatcher and overrides `globalThis.fetch` so all outbound provider requests route through the proxy. Localhost no-proxy hosts (`127.0.0.1`, `::1`, `localhost`) are added automatically.
 
@@ -45,8 +45,11 @@ packages/daemon/src/
 │   └── secrets/            # Secret storage layer
 │       ├── store.ts        # SecretStore interface + SECRET_KEYS constants
 │       ├── encrypted-file-store.ts  # EncryptedFileSecretStore (AES-256-GCM)
+│       ├── encrypted-sqlite-store.ts # EncryptedSqliteSecretStore (AES-256-GCM)
 │       ├── config-splitter.ts       # extractSecretsToStore() / hydrateSecretsFromStore()
 │       └── master-key.ts   # Master key resolution: CC_GATEWAY_SECRET_KEY env → key file → generate
+├── storage/
+│   └── sqlite.ts            # SQLite backend for Docker/Web config, secrets, sessions
 ├── core/                   # Shared domain primitives (no provider-specific logic)
 │   ├── anthropic/
 │   │   ├── types.ts        # MessagesRequest/Response, Message, ContentBlock, Tool, Usage, ModelInfo
@@ -531,14 +534,14 @@ These pages are served from `routes/oauth/` callback endpoints (e.g. `GET /api/o
 While there isn't a single `ConfigManager` class, the configuration system is the daemon's central nervous system. Entry points:
 
 **`loadConfig()`** — `config/index.ts`:
-1. Checks if `config.json` exists at `~/.config/claude-code-provider-gateway/config.json`.
+1. Selects storage: file mode by default, or SQLite when `CCPG_STORAGE_BACKEND=sqlite` / `CCPG_SQLITE_PATH` is set.
 2. On first run: calls `buildDefaultConfig()`, saves it, returns the fresh config.
-3. On subsequent runs: reads JSON from disk, deep-merges with defaults, runs `normalizeConfig()` for validation, hydrates secrets from the encrypted store, and applies one-shot migration to move inline secrets into the store.
+3. On subsequent runs: reads JSON from the selected backend, deep-merges with defaults, runs `normalizeConfig()` for validation, hydrates secrets from the encrypted store, applies runtime env overrides for ports/auth token, and applies one-shot migration to move inline secrets into the store.
 
 **`saveConfig(config)`**:
 1. Deep-clones the config.
-2. Calls `extractSecretsToStore()` to drain secrets (auth tokens, API keys, OAuth tokens) into `EncryptedFileSecretStore`.
-3. Writes the sanitized JSON to disk with `0o600` permissions.
+2. Calls `extractSecretsToStore()` to drain secrets (auth tokens, API keys, OAuth tokens) into the selected encrypted `SecretStore`.
+3. Writes the sanitized JSON document to the selected backend.
 
 **`Config` type** — `config/schema.ts`:
 
@@ -561,8 +564,9 @@ interface Config {
 
 **Secrets layer** — `config/secrets/`:
 
-- **`SecretStore` interface** — `get(key)`, `set(key, value)`, `delete(key)`, `keys()`.
+- **`SecretStore` interface** — `get(key)`, `set(key, value)`, `delete(key)`, `keys()`, `getDecryptErrorKeys()`.
 - **`EncryptedFileSecretStore`** — AES-256-GCM encrypted JSON file at `secrets.enc.json`. Each secret is stored as `{nonce, ciphertext, tag}` hex objects. Read/write with `0o600` permissions.
+- **`EncryptedSqliteSecretStore`** — AES-256-GCM encrypted secret entries stored in the SQLite `secret_entries` table. The encrypted payload format matches the file store.
 - **`config-splitter.ts`** — `extractSecretsToStore()` drains secrets from the config object before persistence. `hydrateSecretsFromStore()` restores them after loading. Handles `server.authToken`, `provider.<id>.apiKey`, and `provider.<id>.oauth.*` keys for both built-in and custom providers.
 - **Master key resolution** (`master-key.ts`): priority order is `CC_GATEWAY_SECRET_KEY` env var → existing `secret.key` file → generate new 32-byte key and persist.
 

@@ -1,0 +1,35 @@
+services:
+  ccpg:
+    build:
+      context: .
+    image: cc-provider-gtw:local
+    environment:
+      NODE_ENV: production
+      CCPG_RUNTIME_MODE: docker
+      CCPG_STORAGE_BACKEND: sqlite
+      CCPG_SQLITE_PATH: /data/ccpg.sqlite
+      CCPG_CONFIG_DIR: /data
+      CCPG_PANEL_PORT: "6767"
+      CCPG_PROXY_PORT: "49250"
+      CC_GATEWAY_BIND_HOST: 0.0.0.0
+    ports:
+      - "6767:6767"
+      - "49250:49250"
+    volumes:
+      - ccpg_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:'+(process.env.CCPG_PANEL_PORT||6767)+'/api/status').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+volumes:
+  ccpg_data:

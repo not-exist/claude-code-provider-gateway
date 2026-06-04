@@ -10,7 +10,7 @@ cleaner, source-linked form.
 
 | Audience | Start here | Then read |
 |---|---|---|
-| New users | [Getting Started](GETTING-STARTED.md) | [Providers](PROVIDERS.md), [Configuration](CONFIGURATION.md), [Troubleshooting](TROUBLESHOOTING.md) |
+| New users | [Getting Started](GETTING-STARTED.md) | [Docker/Web Guide](DOCKER.md), [Providers](PROVIDERS.md), [Configuration](CONFIGURATION.md), [Troubleshooting](TROUBLESHOOTING.md) |
 | Power users | [Providers](PROVIDERS.md) | [Panel Features](PANEL_FEATURES.md), [API Reference](API_REFERENCE.md) |
 | Contributors | [Development](DEVELOPMENT.md) | [Codebase Guide](CODEBASE_GUIDE.md), [Adding a Provider](ADDING_PROVIDER.md), [Testing](TESTING.md) |
 | Maintainers | [Architecture](ARCHITECTURE.md) | [Daemon Reference](DAEMON_REFERENCE.md), [Maintenance Notes](MAINTENANCE.md), [Security](../SECURITY.md) |
@@ -21,12 +21,13 @@ cleaner, source-linked form.
 |---|---|
 | [App Screens](APP_SCREENS.md) | Preview the desktop app UI before installing it, including the OpenAI Gateway screen. |
 | [Getting Started](GETTING-STARTED.md) | Install the desktop app, complete first-run setup, launch Claude Code through `ccpg`, and connect OpenAI-compatible clients. |
+| [Docker/Web Guide](DOCKER.md) | Run CCPG with Docker Compose, configure ports, volumes, env vars, Terminal Integration, reverse proxy, backups, and troubleshooting. |
 | [Configuration](CONFIGURATION.md) | Runtime config shape, environment variables, defaults, secrets, and storage locations. |
 | [Providers](PROVIDERS.md) | Provider catalog, auth modes, CLI flags, model discovery, Model Chains, and provider UX. |
 | [Panel Features](PANEL_FEATURES.md) | Frontend feature modules and how the management UI is organized. |
 | [Architecture](ARCHITECTURE.md) | System layers, request lifecycle, provider transports, session handling, storage, and security model. |
 | [Daemon Reference](DAEMON_REFERENCE.md) | Backend module reference for proxy, panel API, providers, sessions, observability, and build output. |
-| [API Reference](API_REFERENCE.md) | Local proxy and panel API endpoints used by Claude Code, OpenAI-compatible clients, the panel, and shell setup. |
+| [API Reference](API_REFERENCE.md) | Local proxy and panel API endpoints used by Claude Code, OpenAI-compatible clients, the panel, and Terminal Integration. |
 | [Adding a Provider](ADDING_PROVIDER.md) | Implementation checklist and design patterns for built-in provider support. Runtime-compatible endpoints can usually be added from the Providers UI instead. |
 | [Codebase Guide](CODEBASE_GUIDE.md) | Repository structure, naming conventions, module patterns, and where to add code. |
 | [Development](DEVELOPMENT.md) | Source setup, local dev modes, package scripts, quality gates, builds, and release flow. |
@@ -38,8 +39,9 @@ cleaner, source-linked form.
 
 - Treat source files as the source of truth. Prefer links to concrete modules
   over duplicating large implementation details.
-- Keep user-facing docs focused on desktop usage. Node.js, Bun, Rust, and Tauri
-  belong in contributor/build docs, not in first-run instructions.
+- Keep user-facing docs focused on official runtime paths: desktop app and
+  Docker/Web. Node.js, Bun, Rust, and Tauri belong in contributor/build docs,
+  not in first-run instructions.
 - Update [API Reference](API_REFERENCE.md) when adding or changing routes in
   `packages/daemon/src/proxy/routes/` or `packages/daemon/src/panel/routes/`.
 - Update [Providers](PROVIDERS.md) and [Adding a Provider](ADDING_PROVIDER.md)

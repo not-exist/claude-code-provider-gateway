@@ -27,8 +27,8 @@ Checks:
 
    Those keys override the environment exported by `ccpg`.
 
-2. Relaunch your shell after installing the shell setup snippet from
-   **Dashboard -> Shell Setup**.
+2. Relaunch your shell after installing the Terminal Integration snippet from
+   **Dashboard -> Terminal Integration**.
 3. Start Claude Code with a CCPG flag:
 
    ```bash
@@ -204,6 +204,34 @@ npm run dev:desk
 The Vite dev server proxies `/api/*` to `http://127.0.0.1:6767` on purpose.
 Using `localhost` can hit IPv6 `::1` on Linux while the daemon binds IPv4.
 
+## Docker/Web Issues
+
+Start Docker/Web with:
+
+```bash
+docker compose up -d --build
+```
+
+Then open `http://localhost:6767`.
+
+If the browser cannot connect:
+
+1. Check the container:
+
+   ```bash
+   docker compose ps
+   docker compose logs -f ccpg
+   ```
+
+2. Make sure ports `6767` and `49250` are not already used by another local
+   process or a running desktop/dev daemon.
+3. Confirm the Compose environment still sets `CC_GATEWAY_BIND_HOST=0.0.0.0`.
+   Without that, the daemon binds loopback inside the container and Docker port
+   publishing cannot reach it.
+
+For Docker/Web ports, persisted state, Terminal Integration, reverse proxy, and
+container-specific fixes, see the [Docker/Web Guide](DOCKER.md).
+
 ## Runtime Files To Inspect
 
 Runtime state lives in:
@@ -218,8 +246,14 @@ Useful files:
 | `daemon.log` | Provider errors, OAuth failures, RTK/Caveman logs, startup/shutdown messages. |
 | `config.json` | Non-secret provider settings, model mode, Model Chains, ports, token saver settings. |
 | `provider-logos/` | Uploaded PNG/WebP logos for user-created custom providers. |
-| `current-session.json` | Active session checkpoints. |
-| `sessions.jsonl` | Archived sessions. |
+
+In Docker/Web mode, inspect the container volume instead:
+
+| Path | What to inspect |
+|---|---|
+| `/data/ccpg.sqlite` | SQLite database containing config, encrypted secrets, active sessions, and history. |
+| `/data/secret.key` | Master key file when `CC_GATEWAY_SECRET_KEY` is not supplied. |
+| `/data/provider-logos/` | Uploaded custom provider logos. |
 
 The desktop app can also export the current Server Logs buffer as a `.log` file
 and individual History sessions as `session-{id}.json` in Downloads.

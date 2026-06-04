@@ -1,0 +1,14 @@
+.git
+.github
+.codex
+.agents
+node_modules
+packages/*/node_modules
+packages/*/dist
+packages/daemon/dist-bin
+packages/desktop/src-tauri/target
+npm-debug.log*
+Dockerfile
+docker-compose*.yml
+*.local
+.DS_Store

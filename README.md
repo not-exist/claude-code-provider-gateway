@@ -2,7 +2,7 @@
 
 # Claude Code Provider Gateway
 
-**Claude Code, your provider, one local desktop gateway.**
+**Claude Code, your provider, one local gateway.**
 
 Run Claude Code through OpenAI Account, GitHub Copilot, OpenRouter, DeepSeek, Groq, xAI, Mistral, GLM, Minimax, Command Code, Ollama, LM Studio, llama.cpp, custom OpenAI/Anthropic-compatible endpoints, and many other providers, while keeping the Claude Code workflow intact.
 
@@ -41,7 +41,10 @@ Claude Code -> CCPG desktop app -> local proxy -> your selected LLM provider
 
 You keep Claude Code's agent loop, tool use, project context, custom commands, hooks, MCP servers, and IDE workflow. You choose the model backend.
 
-CCPG is not an npm package for end users. It is built to be downloaded, opened, configured in a UI, and left running as a desktop app.
+CCPG is not an npm package for end users. It has two official runtime modes:
+the Tauri desktop app for a native local experience, and a Docker/Web mode for
+users who want to run the same daemon and panel in a browser without installing
+a desktop app.
 
 ## Why It Exists
 
@@ -59,10 +62,10 @@ Everything runs locally. There is no hosted CCPG service, no telemetry, no accou
 
 ## TL;DR
 
-1. Download the desktop installer for your OS.
+1. Download the desktop installer for your OS, or run the Docker/Web mode.
 2. Open CCPG. The daemon starts automatically.
 3. Add one built-in or custom provider in **Providers** and click **Test**.
-4. Install the `ccpg` shell command from **Dashboard -> Shell Setup**.
+4. Install the `ccpg` shell command from **Dashboard -> Terminal Integration**.
 5. Launch Claude Code:
 
 ```bash
@@ -84,6 +87,23 @@ ccpg --ModelChain
 ccpg --my-chain
 ```
 
+### Docker/Web Quick Start
+
+To run CCPG in a browser with Docker Compose:
+
+```bash
+docker compose up -d --build
+```
+
+Then open:
+
+- Panel UI: `http://localhost:6767`
+- Anthropic/OpenAI-compatible gateway: `http://localhost:49250/v1`
+
+Docker/Web state is persisted in the `ccpg_data` volume. For port mapping,
+environment variables, Terminal Integration, reverse proxy setup, backups, and
+Docker troubleshooting, see the [Docker/Web Guide](docs/DOCKER.md).
+
 ## Status
 
 CCPG is an early release, feedback is welcome, and it is already usable for testing.
@@ -93,11 +113,14 @@ Expect rough edges, but the core flow is ready:
 
 install app → add provider → test connection → run Claude Code through CCPG.
 
-The production path is desktop-only: users should not need Node.js, npm, Rust, Bun, or hand-edited terminal config.
+The primary packaged path is the desktop app: users should not need Node.js,
+npm, Rust, Bun, or hand-edited terminal config. Docker/Web is also supported for
+users who prefer a containerized browser UI.
 
 The official documentation is at **[ccpg.live/docs](https://ccpg.live/docs)**. The repo also keeps the full Markdown docs in [`docs/`](docs/README.md) if you prefer reading them here:
 
 - [Getting Started](docs/GETTING-STARTED.md)
+- [Docker/Web Guide](docs/DOCKER.md)
 - [Providers](docs/PROVIDERS.md)
 - [Configuration](docs/CONFIGURATION.md)
 - [Architecture](docs/ARCHITECTURE.md)
@@ -304,7 +327,7 @@ Then:
 1. Open the app.
 2. Add or log into at least one provider.
 3. Test the provider connection.
-4. Install the `ccpg` shell command from Dashboard -> Shell Setup.
+4. Install the `ccpg` shell command from Dashboard -> Terminal Integration.
 5. Relaunch your shell.
 6. Start Claude Code through CCPG.
 
@@ -373,7 +396,7 @@ ccpg --Ollama --continue
 | `--<chain-slug>` | One enabled Model Chain with the matching slug |
 | `--<custom-provider-slug>` | One user-created custom provider with the matching slug |
 
-Flags are case-insensitive in the shell setup flow.
+Flags are case-insensitive in the Terminal Integration flow.
 
 ## Pricing
 
@@ -425,7 +448,7 @@ This table is about product focus, not a claim that other projects are bad. Term
                        │  │ Desktop Management UI       │  │
                        │  │ Providers · Routing          │  │
                        │  │ Model Chain · OpenAI Gateway │  │
-                       │  │ History · Logs · Shell Setup  │  │
+                       │  │ History · Logs · Terminal Int. │  │
                        │  └─────────────────────────────┘  │
                        └───────────────────────────────────┘
 ```
@@ -471,7 +494,7 @@ The full documentation is available at **[ccpg.live/docs](https://ccpg.live/docs
 | [Configuration](docs/CONFIGURATION.md) | Config file shape, environment variables, defaults, secrets, and runtime storage. |
 | [Architecture](docs/ARCHITECTURE.md) | System layers, request lifecycle, routing, provider transports, security model, and storage. |
 | [Panel Features](docs/PANEL_FEATURES.md) | Management UI feature modules and frontend organization. |
-| [API Reference](docs/API_REFERENCE.md) | Local proxy and panel endpoints used by Claude Code, the desktop UI, and shell setup. |
+| [API Reference](docs/API_REFERENCE.md) | Local proxy and panel endpoints used by Claude Code, the desktop UI, and Terminal Integration. |
 | [Daemon Reference](docs/DAEMON_REFERENCE.md) | Backend module reference for the proxy, panel API, providers, sessions, and observability. |
 | [Adding a Provider](docs/ADDING_PROVIDER.md) | Checklist and implementation patterns for new provider support. |
 | [Codebase Guide](docs/CODEBASE_GUIDE.md) | Repository structure, conventions, extension points, and verification checklist. |

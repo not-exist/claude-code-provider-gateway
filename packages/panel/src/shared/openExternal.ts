@@ -1,5 +1,3 @@
-import { invoke } from "@tauri-apps/api/core";
-
 declare global {
   interface Window {
     __TAURI_INTERNALS__?: unknown;
@@ -22,5 +20,5 @@ export function openExternal(url: string): void {
     return;
   }
 
-  void invoke("open_url", { url });
+  void import("@tauri-apps/api/core").then(({ invoke }) => invoke("open_url", { url }));
 }

@@ -3,6 +3,7 @@ import type { BuiltInProviderId, ProviderId } from "../../config/schema.js";
 import { CLI_FLAGS, PROVIDER_LABELS } from "../../config/schema.js";
 import type { PanelRuntime } from "../runtime.js";
 import {
+  canUseHostShellIntegration,
   getShellSetup,
   getSnippetForShell,
   installSnippet,
@@ -52,6 +53,15 @@ export function registerShellRoutes(app: Hono, runtime: PanelRuntime): void {
 
   app.post("/api/shell-setup/install", async (c) => {
     const config = runtime.currentConfig();
+    if (!canUseHostShellIntegration()) {
+      return c.json(
+        {
+          error:
+            "Automatic terminal integration is disabled in Docker/Web mode. Copy the manual command into a terminal on the host instead.",
+        },
+        409,
+      );
+    }
     const body = await c.req.json<{ shells?: unknown }>().catch(() => ({}) as { shells?: unknown });
     const requested = parseRequestedShells(body.shells);
     if (!requested.ok) return c.json({ error: requested.error }, 400);

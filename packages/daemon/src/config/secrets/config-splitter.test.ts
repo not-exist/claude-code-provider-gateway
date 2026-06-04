@@ -23,6 +23,9 @@ class MemoryStore implements SecretStore {
   keys() {
     return Array.from(this.map.keys());
   }
+  getDecryptErrorKeys() {
+    return [];
+  }
 }
 
 test("extracts all secret fields out of config and blanks them", () => {

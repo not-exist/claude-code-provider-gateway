@@ -62,6 +62,11 @@ export type ShellInfo = {
 };
 
 export type ShellSetupResponse = {
+  runtime: {
+    mode: "host" | "container";
+    canAutoInstall: boolean;
+    message?: string;
+  };
   shells: ShellInfo[];
   currentShell: ShellName | null;
   snippets: Record<"posix" | "fish" | "powershell", string>;
@@ -141,8 +146,15 @@ export type RoutingOption = {
   models: Array<{ id: string; display_name: string }>;
 };
 
+export type PanelRuntimeMetadata = {
+  runtime: {
+    mode: "host" | "container";
+  };
+};
+
 export type PanelConfigResponse = Config;
-export type SettingsConfigResponse = Pick<Config, "server" | "webTools" | "proxy" | "tokenSavers">;
+export type SettingsConfigResponse = Pick<Config, "server" | "webTools" | "proxy" | "tokenSavers"> &
+  PanelRuntimeMetadata;
 export type RoutingConfigResponse = Pick<Config, "routing" | "thinking">;
 
 export type OpenAIGatewayResponse = {

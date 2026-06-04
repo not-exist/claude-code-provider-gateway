@@ -4,7 +4,7 @@ Use this page to preview the CCPG desktop app before installing it. These screen
 
 ## Dashboard
 
-The dashboard shows daemon status, active providers, live gateway activity, and shell setup actions.
+The dashboard shows daemon status, active providers, live gateway activity, and Terminal Integration actions.
 
 <p align="center">
   <img src="../.github/assets/screen-pages/dashboard.png" alt="CCPG dashboard" width="95%" />

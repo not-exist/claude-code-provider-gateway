@@ -2,7 +2,7 @@
 
 # @claude-code-provider-gateway/daemon
 
-The core daemon for Claude Code Provider Gateway. Starts a local proxy with Anthropic-compatible and OpenAI-compatible API surfaces, plus a management panel API — all bound to loopback only. Claude Code talks to the Anthropic surface; OpenAI-compatible clients can use `/v1`; the desktop app talks to the panel. The daemon routes requests to your configured LLM provider, translating protocols when needed, and streams results back in the client protocol.
+The core daemon for Claude Code Provider Gateway. Starts a local proxy with Anthropic-compatible and OpenAI-compatible API surfaces, plus a management panel API. Servers bind to loopback by default for desktop/local use, and can bind to `CC_GATEWAY_BIND_HOST` for Docker/Web. Claude Code talks to the Anthropic surface; OpenAI-compatible clients can use `/v1`; the desktop app or browser panel talks to the panel API. The daemon routes requests to your configured LLM provider, translating protocols when needed, and streams results back in the client protocol.
 
 **Part of the [Claude Code Provider Gateway](https://github.com/danielalves96/claude-code-provider-gateway) monorepo.**
 
@@ -30,8 +30,8 @@ startDaemon(config);
 
 | Server | Default port | Bound to | Purpose |
 |--------|-------------|----------|---------|
-| Proxy  | `49250`     | `127.0.0.1` | Anthropic-compatible Messages API and OpenAI-compatible gateway — `POST /v1/messages`, `POST /v1/chat/completions`, `GET /v1/models`, `POST /v1/messages/count_tokens` |
-| Panel  | `49251`     | `127.0.0.1` | Management API consumed by the desktop UI — config, providers, sessions, OAuth, shell setup |
+| Proxy  | `49250`     | `127.0.0.1` or `CC_GATEWAY_BIND_HOST` | Anthropic-compatible Messages API and OpenAI-compatible gateway — `POST /v1/messages`, `POST /v1/chat/completions`, `GET /v1/models`, `POST /v1/messages/count_tokens` |
+| Panel  | `6767`      | `127.0.0.1` or `CC_GATEWAY_BIND_HOST` | Management API and React panel — config, providers, sessions, OAuth, shell setup |
 
 Both servers are built with [Hono](https://hono.dev) and served via `@hono/node-server`.
 

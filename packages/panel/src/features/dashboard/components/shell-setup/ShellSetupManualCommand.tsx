@@ -53,7 +53,7 @@ function ShellPicker({
   return (
     <Flex justify="space-between" align="center">
       <Text type="secondary" style={{ fontSize: 12 }}>
-        Or paste this in any terminal:
+        Paste this in a terminal on your host system:
       </Text>
       <Space size={4}>
         {shells.map((shell) => (
@@ -93,6 +93,11 @@ function buildInstallCommand({
     return `Invoke-RestMethod http://127.0.0.1:${panelPort}/api/shell-setup/snippet/powershell | Add-Content $PROFILE`;
   }
 
-  const destinationPath = rcPath ?? `$HOME/.${shell}rc`;
+  const destinationPath = rcPath || defaultRcPath(shell);
   return `curl -fsS http://127.0.0.1:${panelPort}/api/shell-setup/snippet/${shell} >> "${destinationPath}"`;
+}
+
+function defaultRcPath(shell: Exclude<ShellName, "powershell">): string {
+  if (shell === "fish") return "$HOME/.config/fish/config.fish";
+  return `$HOME/.${shell}rc`;
 }

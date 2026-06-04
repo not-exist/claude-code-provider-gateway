@@ -28,6 +28,7 @@ export function startDaemon(config: Config): void {
 class DaemonRuntime {
   private readonly ready = new Set<ServiceName>();
   private servers: ManagedServer[] = [];
+  private readonly hostname = process.env.CC_GATEWAY_BIND_HOST || "127.0.0.1";
 
   constructor(private readonly config: Config) {}
 
@@ -55,12 +56,12 @@ class DaemonRuntime {
   }
 
   private bind(binding: ServerBinding): ManagedServer {
-    // Local-first: loopback only. The Tauri webview and dev tooling both
-    // live on the host machine; nothing legitimate connects from outside.
+    // Local-first by default. Docker can opt into 0.0.0.0 through
+    // CC_GATEWAY_BIND_HOST so published ports are reachable from the host.
     const server = serve(
-      { fetch: binding.app.fetch, port: binding.port, hostname: "127.0.0.1" },
+      { fetch: binding.app.fetch, port: binding.port, hostname: this.hostname },
       () => {
-        logger.info(binding.name, `listening on 127.0.0.1:${binding.port}`);
+        logger.info(binding.name, `listening on ${this.hostname}:${binding.port}`);
         binding.onReady?.();
         this.markReady(binding.name);
       },

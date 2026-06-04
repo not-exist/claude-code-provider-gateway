@@ -44,7 +44,7 @@ The panel exposes the following pages:
 
 | Page | Path | Description |
 |------|------|-------------|
-| **Dashboard** | `/` | System status overview, enabled provider count, quick launch, and shell setup instructions. |
+| **Dashboard** | `/` | System status overview, enabled provider count, quick launch, and Terminal Integration instructions. |
 | **Live Session** | `/live` | Real-time monitoring of the active Claude Code session, including request logs, model stats, and provider latency. |
 | **Providers** | `/providers` | Add custom OpenAI/Anthropic-compatible providers, configure, test, reorder, and favorite LLM providers. Supports search and status filtering. |
 | **Routing** | `/routing` | Map Claude model tiers (Opus, Sonnet, Haiku) to specific providers and models. |

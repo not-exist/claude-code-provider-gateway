@@ -16,7 +16,7 @@ export function requirePanelAccess(runtime: PanelRuntime) {
     const origin = c.req.header("Origin") ?? "";
     const token = readBearerToken(c.req.header("Authorization") ?? c.req.header("x-api-key") ?? "");
     const hasValidToken = !!config.server.authToken && token === config.server.authToken;
-    const isAllowedOrigin = isAllowedPanelOrigin(origin);
+    const isAllowedOrigin = isAllowedPanelOrigin(origin, config.server.panelPort);
     const isCrossSiteBrowserRequest = c.req.header("Sec-Fetch-Site") === "cross-site";
 
     if (origin && !isAllowedOrigin && !hasValidToken) {
@@ -44,11 +44,34 @@ export function requirePanelAccess(runtime: PanelRuntime) {
   };
 }
 
-function isAllowedPanelOrigin(origin: string): boolean {
+function isAllowedPanelOrigin(origin: string, panelPort: number): boolean {
   if (!origin) return false;
   if (TAURI_PANEL_ORIGINS.has(origin)) return true;
   if (process.env.NODE_ENV !== "production" && DEV_PANEL_ORIGINS.has(origin)) return true;
+  if (isLocalPanelOrigin(origin, panelPort)) return true;
+  if (configuredPanelOrigins().has(origin)) return true;
   return false;
+}
+
+function isLocalPanelOrigin(origin: string, panelPort: number): boolean {
+  try {
+    const url = new URL(origin);
+    return (
+      (url.hostname === "localhost" || url.hostname === "127.0.0.1") &&
+      url.port === String(panelPort)
+    );
+  } catch {
+    return false;
+  }
+}
+
+function configuredPanelOrigins(): Set<string> {
+  return new Set(
+    (process.env.CCPG_PANEL_ORIGINS ?? "")
+      .split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean),
+  );
 }
 
 function readBearerToken(auth: string): string {

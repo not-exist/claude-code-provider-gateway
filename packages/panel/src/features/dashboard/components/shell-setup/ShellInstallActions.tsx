@@ -69,6 +69,10 @@ export function ShellInstallSummary({ shells }: { shells: ShellInfo[] }) {
   );
 }
 
+export function ManualShellSetupSummary() {
+  return <Tag>Manual setup</Tag>;
+}
+
 function ShellInstallButton({
   shell,
   busy,

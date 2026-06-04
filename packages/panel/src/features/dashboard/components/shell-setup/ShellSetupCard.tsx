@@ -1,8 +1,12 @@
 import { CodeOutlined } from "@ant-design/icons";
-import { App, Button, Card, Flex, Space, Typography, theme } from "antd";
+import { Alert, App, Button, Card, Flex, Space, Typography, theme } from "antd";
 import type { ShellSetup } from "../../domain/types.js";
 import { useShellSetupCard } from "../../hooks/useShellSetupCard.js";
-import { ShellInstallActions, ShellInstallSummary } from "./ShellInstallActions.js";
+import {
+  ManualShellSetupSummary,
+  ShellInstallActions,
+  ShellInstallSummary,
+} from "./ShellInstallActions.js";
 import { ShellSetupManualCommand } from "./ShellSetupManualCommand.js";
 
 const { Text } = Typography;
@@ -70,7 +74,11 @@ export function ShellSetupCard({
       }
       extra={
         <Space>
-          <ShellInstallSummary shells={setup.shells} />
+          {setup.runtime.canAutoInstall ? (
+            <ShellInstallSummary shells={setup.shells} />
+          ) : (
+            <ManualShellSetupSummary />
+          )}
           {canDismiss && (
             <Button type="text" size="small" onClick={onDismiss}>
               Dismiss
@@ -84,11 +92,16 @@ export function ShellSetupCard({
     >
       {card.open && (
         <Flex vertical gap={token.paddingLG}>
-          <ShellInstallActions
-            shells={setup.shells}
-            installingShell={card.installingShell}
-            onInstall={card.install}
-          />
+          {!setup.runtime.canAutoInstall && setup.runtime.message && (
+            <Alert type="info" showIcon message={setup.runtime.message} />
+          )}
+          {setup.runtime.canAutoInstall && (
+            <ShellInstallActions
+              shells={setup.shells}
+              installingShell={card.installingShell}
+              onInstall={card.install}
+            />
+          )}
           <ShellSetupManualCommand
             setup={setup}
             panelPort={panelPort}

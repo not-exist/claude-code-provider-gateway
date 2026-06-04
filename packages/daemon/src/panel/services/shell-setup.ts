@@ -22,6 +22,11 @@ export interface ShellInfo {
 }
 
 export interface ShellSetupResponse {
+  runtime: {
+    mode: "host" | "container";
+    canAutoInstall: boolean;
+    message?: string;
+  };
   shells: ShellInfo[];
   currentShell: ShellName | null;
   snippets: Record<"posix" | "fish" | "powershell", string>;
@@ -50,6 +55,25 @@ function whichSync(cmd: string): string | null {
 }
 
 export function getShellSetup(config: Config): ShellSetupResponse {
+  if (!canUseHostShellIntegration()) {
+    return {
+      runtime: {
+        mode: "container",
+        canAutoInstall: false,
+        message:
+          "Docker/Web runs the daemon inside a container. Automatic install would modify the container shell, not your host shell.",
+      },
+      shells: hostShellOptions(),
+      currentShell: null,
+      snippets: {
+        posix: buildPosixSnippet(config.server.panelPort),
+        fish: buildFishSnippet(config.server.panelPort),
+        powershell: buildPowerShellSnippet(config.server.panelPort),
+      },
+      usage: `${SHELL_COMMAND} --deepseek    # any provider flag, case-insensitive`,
+    };
+  }
+
   const shells: ShellInfo[] = (["zsh", "bash", "fish", "powershell"] as ShellName[])
     .filter(isShellInstalled)
     .map((name) => {
@@ -65,6 +89,7 @@ export function getShellSetup(config: Config): ShellSetupResponse {
     });
 
   return {
+    runtime: { mode: "host", canAutoInstall: true },
     shells,
     currentShell: detectCurrentShell(),
     snippets: {
@@ -74,6 +99,21 @@ export function getShellSetup(config: Config): ShellSetupResponse {
     },
     usage: `${SHELL_COMMAND} --deepseek    # any provider flag, case-insensitive`,
   };
+}
+
+export function canUseHostShellIntegration(): boolean {
+  return (
+    process.env.CCPG_RUNTIME_MODE !== "docker" && process.env.CCPG_DISABLE_HOST_SHELL_SETUP !== "1"
+  );
+}
+
+function hostShellOptions(): ShellInfo[] {
+  return (["zsh", "bash", "fish", "powershell"] as ShellName[]).map((name) => ({
+    name,
+    rcPath: "",
+    rcExists: false,
+    installed: false,
+  }));
 }
 
 function rcContainsCurrentSnippet(rcPath: string, desired: string): boolean {
@@ -182,6 +222,16 @@ export interface InstallResult {
 // write the current version, so users get bugfixes by clicking "Add" again.
 // Creates the file (and parent dir for fish) if missing.
 export function installSnippet(config: Config, shell: ShellName): InstallResult {
+  if (!canUseHostShellIntegration()) {
+    return {
+      shell,
+      status: "error",
+      rcPath: "",
+      error:
+        "Automatic terminal integration is disabled in Docker/Web mode. Copy the manual command into a terminal on the host instead.",
+    };
+  }
+
   const rcPath = SHELL_RC_PATHS[shell]();
   const desired = getSnippetForShell(config, shell);
 

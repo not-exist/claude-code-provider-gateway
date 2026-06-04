@@ -107,6 +107,16 @@ export function attachSessionProcess(
   if (!session) return false;
   if (!Number.isInteger(pid) || !pid || pid <= 0) return false;
 
+  if (usesContainerRuntime()) {
+    session.lastHeartbeatAt = Date.now();
+    persistActiveSessions("attach checkpoint failed");
+    logger.info(
+      "sessions",
+      `attached session ${session.id} to host pid ${pid} using heartbeat tracking`,
+    );
+    return true;
+  }
+
   session.watchedPid = pid;
   session.lastHeartbeatAt = Date.now();
   persistActiveSessions("attach checkpoint failed");
@@ -308,6 +318,10 @@ function closeExpiredSessions(): void {
 function shouldEndSession(session: SessionRecord): boolean {
   if (session.watchedPid) return !isProcessAlive(session.watchedPid);
   return !!session.lastHeartbeatAt && Date.now() - session.lastHeartbeatAt > HEARTBEAT_TIMEOUT_MS;
+}
+
+function usesContainerRuntime(): boolean {
+  return process.env.CCPG_RUNTIME_MODE === "docker";
 }
 
 function isProcessAlive(pid: number): boolean {

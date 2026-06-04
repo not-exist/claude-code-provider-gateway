@@ -2,7 +2,12 @@
 
 # Configuration
 
-CCPG stores its configuration as a JSON file on disk, plus an encrypted secrets store derived from it. All settings can be managed through the desktop app UI (the **Settings** tab), but understanding the on-disk format is useful for scripting, debugging, and development.
+CCPG stores configuration through a runtime-specific persistence backend. The
+desktop app uses a JSON file plus an encrypted secrets file in the user config
+directory. Docker/Web uses SQLite so container state can be persisted in one
+volume. All settings can be managed through the app UI (the **Settings** tab),
+but understanding the storage format is useful for scripting, debugging, and
+development.
 
 ## Environment Variables
 
@@ -12,12 +17,20 @@ CCPG stores its configuration as a JSON file on disk, plus an encrypted secrets 
 | `CC_GATEWAY_EXTERNAL_DAEMON` | No | (unset) | Set to `"1"` when running the daemon externally in `dev:desk` mode. Signals that the daemon is launched independently, not as a Tauri sidecar. |
 | `VITE_CC_GATEWAY_EXTERNAL_DAEMON` | No | (unset) | Set to `"1"` during dev mode. The panel uses this to determine whether to communicate with the daemon at `http://127.0.0.1:6767` directly (Tauri/sidecar mode) or via the Vite dev proxy (external dev daemon mode). |
 | `NODE_ENV` | No | (unset) | When set to `"production"`, the daemon binds the panel to the configured `panelPort`. In dev mode it expects the Vite dev server on port 5173 and relaxes CORS origin checks. |
+| `CCPG_STORAGE_BACKEND` | No | `file` | Set to `"sqlite"` to store config, encrypted secrets, and sessions in SQLite. Docker Compose sets this automatically. |
+| `CCPG_SQLITE_PATH` | No | `/data/ccpg.sqlite` when SQLite is enabled | SQLite database path for Docker/Web mode. If this is set, SQLite storage is enabled. |
+| `CCPG_CONFIG_DIR` | No | OS-specific config directory | Overrides the directory used for file-backed state, PID/log files, provider logos, and the Docker `/data` support files. |
+| `CCPG_PANEL_PORT` | No | `6767` | Panel UI/API port. In Docker, publish this port to access the browser UI. |
+| `CCPG_PROXY_PORT` | No | `49250` | Anthropic/OpenAI-compatible gateway port. |
+| `CCPG_AUTH_TOKEN` | No | Auto-generated | Fixed gateway auth token. Usually leave unset so CCPG generates and stores one. |
+| `CC_GATEWAY_BIND_HOST` | No | `127.0.0.1` | Host interface for the daemon servers. Desktop keeps loopback; Docker Compose sets `0.0.0.0` so published ports work. |
+| `CCPG_PANEL_ORIGINS` | No | (unset) | Comma-separated extra browser origins allowed to call the panel API, e.g. `https://ccpg.example.com`. `http://localhost:<panelPort>` and `http://127.0.0.1:<panelPort>` are allowed automatically. |
 | `APPDATA` | No | (system default) | Windows only. Overrides the base directory for the CCPG config folder. Fallback is `%HOMEDRIVE%%HOMEPATH%`. |
 | `NO_PROXY` | No | `"localhost,127.0.0.1,::1"` | Comma-separated list of hosts that bypass the outbound HTTP proxy. CCPG always ensures `localhost`, `127.0.0.1`, and `::1` are included. |
 
 ## Config File Format
 
-The primary configuration file is `config.json`, located at:
+In desktop/file mode, the primary configuration file is `config.json`, located at:
 
 - **Linux/macOS:** `~/.config/claude-code-provider-gateway/config.json`
 - **Windows:** `%APPDATA%/claude-code-provider-gateway/config.json`
@@ -115,6 +128,10 @@ It is a JSON file with the following top-level shape:
 
 > **Important:** The `config.json` file on disk does **not** contain API keys, OAuth tokens, or the server auth token. These secrets are split out into `secrets.enc.json` and encrypted with AES-256-GCM. In the on-disk JSON, secret-backed fields (`apiKey`, `authToken`, `oauth.accessToken`, `oauth.refreshToken`, and `oauth.copilotToken`) will appear as empty strings or null (or omitted).
 
+In Docker/Web mode, the same logical config and encrypted secret payloads are
+stored in SQLite tables inside `CCPG_SQLITE_PATH`. The Compose file persists
+that database with the `ccpg_data` named volume.
+
 ### Top-Level Keys
 
 | Key | Type | Description |
@@ -194,7 +211,7 @@ However, for CCPG to actually route requests, at least one provider must be:
 - **enabled** (`providers.<id>.enabled = true`), and
 - **authenticated** — either with an API key or a completed OAuth flow (managed through the panel UI).
 
-The auth token (`server.authToken`) is auto-generated on first run as a random `sk_`-prefixed hex string. It must match between the daemon and any Claude Code session launched via `ccpg`. It is also the API key shown on the **OpenAI Gateway** page for OpenAI-compatible clients using `Authorization: Bearer <token>`. The shell setup flow handles Claude Code automatically.
+The auth token (`server.authToken`) is auto-generated on first run as a random `sk_`-prefixed hex string. It must match between the daemon and any Claude Code session launched via `ccpg`. It is also the API key shown on the **OpenAI Gateway** page for OpenAI-compatible clients using `Authorization: Bearer <token>`. Terminal Integration handles Claude Code automatically.
 
 ### Optional
 
@@ -271,10 +288,14 @@ For the complete built-in provider base URL list, see `PROVIDER_DEFAULTS` in `pa
 
 ## Secrets Storage
 
-CCPG splits sensitive values out of `config.json` into a dedicated encrypted store. The secrets store lives at:
+CCPG splits sensitive values out of config into a dedicated encrypted store. In
+desktop/file mode, the secrets store lives at:
 
 - **Linux/macOS:** `~/.config/claude-code-provider-gateway/secrets.enc.json`
 - **Windows:** `%APPDATA%/claude-code-provider-gateway/secrets.enc.json`
+
+In Docker/Web SQLite mode, encrypted secret entries are stored in the
+`secret_entries` table inside `CCPG_SQLITE_PATH`.
 
 The following values are stored encrypted, never in plaintext on disk:
 
@@ -323,6 +344,30 @@ In the Tauri desktop app, the daemon runs as a sidecar process. The Tauri superv
 - Manages the daemon lifecycle (start/stop).
 - The panel runs in the Tauri webview, communicating with the daemon at `http://127.0.0.1:6767`.
 
+### Production (Docker/Web)
+
+Docker/Web runs the daemon directly in a Node container and serves the panel to
+the browser from the daemon's static route. The Compose file sets:
+
+- `NODE_ENV=production`
+- `CCPG_STORAGE_BACKEND=sqlite`
+- `CCPG_SQLITE_PATH=/data/ccpg.sqlite`
+- `CCPG_CONFIG_DIR=/data`
+- `CCPG_PANEL_PORT=6767`
+- `CCPG_PROXY_PORT=49250`
+- `CC_GATEWAY_BIND_HOST=0.0.0.0`
+
+Docker/Web port changes must be made before the container starts. Update both
+the Compose `ports:` mapping and the matching internal environment variable
+(`CCPG_PANEL_PORT` or `CCPG_PROXY_PORT`), then recreate the container. Changing
+`server.proxyPort` from the panel does not update Docker port publishing.
+
+For Docker-specific examples, env var details, reverse proxy setup, backup, and
+troubleshooting, see the [Docker/Web Guide](DOCKER.md).
+
+The `ccpg_data` Docker volume persists SQLite state, the master key file, and
+uploaded custom provider logos.
+
 ### CI / Headless
 
 For CI or headless environments, the daemon can be run standalone with `bun` or as a compiled binary. No environment variables are required beyond those documented above. The config auto-generates on first run.
@@ -331,13 +376,15 @@ For CI or headless environments, the daemon can be run standalone with `bun` or 
 
 On startup, the daemon loads configuration in this order:
 
-1. Check if `config.json` exists. If not, generate default config and save it.
-2. Read `config.json` and parse as JSON.
-3. Deep-merge with current defaults (handles missing keys from older config versions).
-4. Normalize all values (type coercion, domain validation, deduplication).
-5. If the parsed JSON still contains inline secrets (legacy format from before the splitter migration), extract them to the encrypted store and rewrite `config.json`.
-6. Hydrate secrets from the encrypted store back into the in-memory config object.
-7. If no `server.authToken` existed in the secrets store (first run), save the config to persist it.
+1. Select the storage backend: file mode by default, SQLite when `CCPG_STORAGE_BACKEND=sqlite` or `CCPG_SQLITE_PATH` is set.
+2. Check if a config document exists. If not, generate default config and save it.
+3. Read the config document and parse as JSON.
+4. Deep-merge with current defaults (handles missing keys from older config versions).
+5. Normalize all values (type coercion, domain validation, deduplication).
+6. Apply runtime env overrides for `CCPG_PROXY_PORT`, `CCPG_PANEL_PORT`, and `CCPG_AUTH_TOKEN` when present.
+7. If the parsed JSON still contains inline secrets (legacy format from before the splitter migration), extract them to the encrypted store and rewrite the config document.
+8. Hydrate secrets from the encrypted store back into the in-memory config object.
+9. If no `server.authToken` existed in the secrets store (first run), save the config to persist it.
 
 This means the config format is forward-compatible: adding new top-level keys to the schema will not break existing installations.
 
@@ -353,3 +400,4 @@ This means the config format is forward-compatible: adding new top-level keys to
 | `daemon.log` | Config directory | Local daemon log (provider errors, request diagnostics). |
 | `current-session.json` | Config directory | Active Claude Code session checkpoints. |
 | `sessions.jsonl` | Config directory | Completed session archive (capped at 200 sessions). |
+| `ccpg.sqlite` | Docker/Web `/data` volume | SQLite config document, encrypted secret entries, active sessions, and session archive. |

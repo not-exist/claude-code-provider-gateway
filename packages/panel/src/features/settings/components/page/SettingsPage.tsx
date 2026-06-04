@@ -25,6 +25,7 @@ export default function SettingsPage() {
     updateProxy,
     tokenSavers,
     updateTokenSavers,
+    runtimeMode,
     loaded,
     saving,
     saved,
@@ -32,6 +33,8 @@ export default function SettingsPage() {
   } = useSettings();
 
   if (!loaded) return <LoadingState />;
+
+  const containerRuntime = runtimeMode === "container";
 
   return (
     <Flex vertical gap={token.paddingLG}>
@@ -43,7 +46,7 @@ export default function SettingsPage() {
       <Row gutter={[token.paddingLG, token.paddingLG]}>
         <Col xs={24} lg={12}>
           <SettingsCard title="Server" icon={<SettingOutlined />}>
-            <ServerCard form={serverForm} />
+            <ServerCard form={serverForm} containerRuntime={containerRuntime} />
           </SettingsCard>
         </Col>
 
@@ -69,7 +72,11 @@ export default function SettingsPage() {
       <Alert
         type="info"
         showIcon
-        message="Port and proxy changes require a gateway restart to take effect."
+        message={
+          containerRuntime
+            ? "Outbound proxy changes require a container restart. Port changes are managed by Docker compose before startup."
+            : "Port and proxy changes require a gateway restart to take effect."
+        }
       />
 
       <Flex>

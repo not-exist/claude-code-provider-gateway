@@ -9,6 +9,7 @@ import { ShellSetupCard } from "./shell-setup/ShellSetupCard.js";
 export default function DashboardPage() {
   const { token } = theme.useToken();
   const page = useDashboardPage();
+  const isContainerRuntime = page.shellSetup?.runtime.mode === "container";
 
   const shellSetupCard = page.shouldShowShellSetup
     ? page.shellSetup && (
@@ -28,9 +29,9 @@ export default function DashboardPage() {
       <PageHeader title="Dashboard" />
       <StatusOverview status={page.status} topModel={page.topModel} isLoading={page.isLoading} />
       <EnabledProvidersCard stats={page.stats} isLoading={page.isLoading} />
-      {!page.hasTerminalConfigured && shellSetupCard}
       <QuickLaunchCard items={page.launchItems} error={page.launchError} />
-      {page.hasTerminalConfigured && shellSetupCard}
+      {!isContainerRuntime && !page.hasTerminalConfigured && shellSetupCard}
+      {(isContainerRuntime || page.hasTerminalConfigured) && shellSetupCard}
     </Flex>
   );
 }

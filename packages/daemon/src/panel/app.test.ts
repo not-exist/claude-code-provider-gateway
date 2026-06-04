@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
 import { buildDefaultConfig } from "../config/index.js";
 import type { Config } from "../config/schema.js";
@@ -80,6 +83,52 @@ test("panel API rejects vite dev origin in production", async () => {
   } finally {
     if (previous === undefined) delete process.env.NODE_ENV;
     else process.env.NODE_ENV = previous;
+  }
+});
+
+test("panel API allows same panel origin in production web mode", async () => {
+  const previous = process.env.NODE_ENV;
+  process.env.NODE_ENV = "production";
+  try {
+    const config = buildDefaultConfig();
+    config.server.authToken = "secret";
+    config.server.panelPort = 6767;
+    const app = testPanelApp(config);
+
+    const response = await app.request("/api/config", {
+      method: "PUT",
+      headers: {
+        Origin: "http://localhost:6767",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ tokenSavers: { rtkEnabled: true } }),
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("Access-Control-Allow-Origin"), "http://localhost:6767");
+  } finally {
+    if (previous === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = previous;
+  }
+});
+
+test("panel API allows configured panel origins", async () => {
+  const previous = process.env.CCPG_PANEL_ORIGINS;
+  process.env.CCPG_PANEL_ORIGINS = "https://ccpg.example.test";
+  try {
+    const config = buildDefaultConfig();
+    config.server.authToken = "secret";
+    const app = testPanelApp(config);
+
+    const response = await app.request("/api/status", {
+      headers: { Origin: "https://ccpg.example.test" },
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("Access-Control-Allow-Origin"), "https://ccpg.example.test");
+  } finally {
+    if (previous === undefined) delete process.env.CCPG_PANEL_ORIGINS;
+    else process.env.CCPG_PANEL_ORIGINS = previous;
   }
 });
 
@@ -187,6 +236,91 @@ test("panel API rejects unknown shell names before installing snippets", async (
 
   assert.equal(response.status, 400);
   assert.deepEqual(await response.json(), { error: "Unknown shell: ../bad" });
+});
+
+test("panel API disables automatic shell install in Docker runtime", async () => {
+  const previous = process.env.CCPG_RUNTIME_MODE;
+  process.env.CCPG_RUNTIME_MODE = "docker";
+  try {
+    const config = buildDefaultConfig();
+    config.server.authToken = "secret";
+    const app = testPanelApp(config);
+
+    const setupResponse = await app.request("/api/shell-setup");
+    assert.equal(setupResponse.status, 200);
+    const setup = (await setupResponse.json()) as {
+      runtime: { mode: string; canAutoInstall: boolean };
+    };
+    assert.deepEqual(setup.runtime, {
+      mode: "container",
+      canAutoInstall: false,
+      message:
+        "Docker/Web runs the daemon inside a container. Automatic install would modify the container shell, not your host shell.",
+    });
+
+    const installResponse = await app.request("/api/shell-setup/install", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer secret",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ shells: ["zsh"] }),
+    });
+    assert.equal(installResponse.status, 409);
+  } finally {
+    if (previous === undefined) delete process.env.CCPG_RUNTIME_MODE;
+    else process.env.CCPG_RUNTIME_MODE = previous;
+  }
+});
+
+test("Docker runtime tracks launched sessions by heartbeat instead of host pid", async () => {
+  const previousRuntimeMode = process.env.CCPG_RUNTIME_MODE;
+  const previousConfigDir = process.env.CCPG_CONFIG_DIR;
+  const configDir = mkdtempSync(join(tmpdir(), "ccpg-docker-session-test-"));
+  process.env.CCPG_RUNTIME_MODE = "docker";
+  process.env.CCPG_CONFIG_DIR = configDir;
+  try {
+    const { attachSessionProcess, endSession, listCurrentSessions, startSession } = await import(
+      "../runtime/sessions/index.js"
+    );
+    const config = buildDefaultConfig();
+    config.server.authToken = "secret";
+    const session = startSession(config, "ccpg_test");
+
+    assert.equal(attachSessionProcess(session.id, 999_999), true);
+
+    const [current] = listCurrentSessions();
+    assert.equal(current?.id, session.id);
+    assert.equal(current?.watchedPid, undefined);
+    endSession(session.id);
+  } finally {
+    if (previousRuntimeMode === undefined) delete process.env.CCPG_RUNTIME_MODE;
+    else process.env.CCPG_RUNTIME_MODE = previousRuntimeMode;
+    if (previousConfigDir === undefined) delete process.env.CCPG_CONFIG_DIR;
+    else process.env.CCPG_CONFIG_DIR = previousConfigDir;
+    rmSync(configDir, { recursive: true, force: true });
+  }
+});
+
+test("GET /api/config reports Docker runtime metadata", async () => {
+  const previous = process.env.CCPG_RUNTIME_MODE;
+  process.env.CCPG_RUNTIME_MODE = "docker";
+  try {
+    const config = buildDefaultConfig();
+    config.server.authToken = "secret";
+    const app = testPanelApp(config);
+
+    const response = await app.request("/api/config", {
+      headers: { Authorization: "Bearer secret" },
+    });
+
+    assert.equal(response.status, 200);
+    const body = (await response.json()) as { runtime?: { mode?: string } };
+    assert.equal(body.runtime?.mode, "container");
+  } finally {
+    if (previous === undefined) delete process.env.CCPG_RUNTIME_MODE;
+    else process.env.CCPG_RUNTIME_MODE = previous;
+  }
 });
 
 test("PUT /api/config persists proxy settings and returns them on GET", async () => {

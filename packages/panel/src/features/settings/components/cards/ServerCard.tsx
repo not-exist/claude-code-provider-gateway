@@ -1,9 +1,10 @@
-import { Form, type FormInstance, InputNumber } from "antd";
+import { Alert, Form, type FormInstance, InputNumber } from "antd";
 import type { CSSProperties } from "react";
 import type { ServerConfig } from "../../domain/types.js";
 
 interface ServerCardProps {
   form: FormInstance<ServerConfig>;
+  containerRuntime?: boolean;
 }
 
 const MONO_INPUT: CSSProperties = {
@@ -11,7 +12,22 @@ const MONO_INPUT: CSSProperties = {
   fontFamily: "monospace",
 };
 
-export function ServerCard({ form }: ServerCardProps) {
+export function ServerCard({ form, containerRuntime = false }: ServerCardProps) {
+  if (containerRuntime) {
+    return (
+      <Form form={form} layout="vertical" requiredMark={false} style={{ margin: 0 }}>
+        <Form.Item name="proxyPort" label="Proxy Port" style={{ marginBottom: 12 }}>
+          <InputNumber style={MONO_INPUT} disabled />
+        </Form.Item>
+        <Alert
+          type="info"
+          showIcon
+          message="Docker publishes this port from docker-compose.yml. Port changes require recreating the container."
+        />
+      </Form>
+    );
+  }
+
   return (
     <Form form={form} layout="vertical" requiredMark={false} style={{ margin: 0 }}>
       <Form.Item

@@ -9,7 +9,14 @@ import { normalizeConfig } from "../../config/validation.js";
 import type { PanelRuntime } from "../runtime.js";
 
 export function registerConfigRoutes(app: Hono, runtime: PanelRuntime): void {
-  app.get("/api/config", (c) => c.json(maskConfig(runtime.currentConfig())));
+  app.get("/api/config", (c) =>
+    c.json({
+      ...maskConfig(runtime.currentConfig()),
+      runtime: {
+        mode: process.env.CCPG_RUNTIME_MODE === "docker" ? "container" : "host",
+      },
+    }),
+  );
 
   app.put("/api/config", async (c) => {
     const config = runtime.currentConfig();

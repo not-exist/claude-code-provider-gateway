@@ -10,6 +10,17 @@ import {
 } from "node:fs";
 import { getConfigDir, getCurrentSessionPath, getSessionArchivePath } from "../../config/paths.js";
 import { appendPrivateFile, writePrivateFile } from "../../core/files/private-file.js";
+import {
+  archiveSessionToSqlite,
+  clearArchivedSessionsFromSqlite,
+  currentSessionsExist,
+  deleteArchivedSessionFromSqlite,
+  isSqliteStorageEnabled,
+  listArchivedSessionsFromSqlite,
+  readCurrentSessionsFromSqlite,
+  removeCurrentSessionsFromSqlite,
+  writeCurrentSessionsToSqlite,
+} from "../../storage/sqlite.js";
 import { normalizeSessionTotals } from "./stats.js";
 import type { SessionRecord } from "./types.js";
 
@@ -20,19 +31,23 @@ const MAX_TEXT_CHARS = 20_000;
 const MAX_PREVIEW_BODY_CHARS = 50_000;
 
 export function ensureSessionDir(): void {
+  if (isSqliteStorageEnabled()) return;
   const dir = getConfigDir();
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
 }
 
 export function currentSessionExists(): boolean {
+  if (isSqliteStorageEnabled()) return currentSessionsExist();
   return existsSync(getCurrentSessionPath());
 }
 
 export function readCurrentSession(): SessionRecord {
+  if (isSqliteStorageEnabled()) return readCurrentSessionsFromSqlite()[0];
   return JSON.parse(readFileSync(getCurrentSessionPath(), "utf-8")) as SessionRecord;
 }
 
 export function readCurrentSessions(): SessionRecord[] {
+  if (isSqliteStorageEnabled()) return readCurrentSessionsFromSqlite();
   const parsed = JSON.parse(readFileSync(getCurrentSessionPath(), "utf-8")) as
     | SessionRecord
     | SessionRecord[];
@@ -44,16 +59,28 @@ export function writeCurrentSession(session: SessionRecord): void {
 }
 
 export function writeCurrentSessions(sessions: SessionRecord[]): void {
+  if (isSqliteStorageEnabled()) {
+    writeCurrentSessionsToSqlite(sessions.map(compactSessionForStorage));
+    return;
+  }
   writePrivateFile(getCurrentSessionPath(), JSON.stringify(sessions.map(compactSessionForStorage)));
 }
 
 export function removeCurrentSession(): void {
+  if (isSqliteStorageEnabled()) {
+    removeCurrentSessionsFromSqlite();
+    return;
+  }
   try {
     unlinkSync(getCurrentSessionPath());
   } catch {}
 }
 
 export function archiveSession(session: SessionRecord): void {
+  if (isSqliteStorageEnabled()) {
+    archiveSessionToSqlite(compactSessionForStorage(session));
+    return;
+  }
   ensureSessionDir();
   appendPrivateFile(
     getSessionArchivePath(),
@@ -63,11 +90,16 @@ export function archiveSession(session: SessionRecord): void {
 }
 
 export function clearArchivedSessions(): void {
+  if (isSqliteStorageEnabled()) {
+    clearArchivedSessionsFromSqlite();
+    return;
+  }
   ensureSessionDir();
   writePrivateFile(getSessionArchivePath(), "");
 }
 
 export function deleteArchivedSession(id: string): boolean {
+  if (isSqliteStorageEnabled()) return deleteArchivedSessionFromSqlite(id);
   const path = getSessionArchivePath();
   if (!existsSync(path)) return false;
   try {
@@ -88,6 +120,7 @@ export function deleteArchivedSession(id: string): boolean {
 }
 
 export function listArchivedSessions(): SessionRecord[] {
+  if (isSqliteStorageEnabled()) return listArchivedSessionsFromSqlite();
   const path = getSessionArchivePath();
   if (!existsSync(path)) return [];
   try {
