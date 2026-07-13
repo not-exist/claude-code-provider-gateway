@@ -1,6 +1,8 @@
 import { PoweroffOutlined } from "@ant-design/icons";
 import { App, Badge, Button, Flex, Layout, Popconfirm, Tooltip, Typography, theme } from "antd";
-import { STATE_BADGE, STATE_LABEL, useGatewayControl } from "../hooks/useGatewayControl.js";
+import { useLocale } from "../../../shared/i18n/index.js";
+import { STATE_BADGE, useGatewayControl } from "../hooks/useGatewayControl.js";
+import { LanguageSwitcher } from "./LanguageSwitcher.js";
 
 const { Header } = Layout;
 const { Text } = Typography;
@@ -9,6 +11,7 @@ export function TopBar() {
   const { token } = theme.useToken();
   const { message } = App.useApp();
   const control = useGatewayControl({ message });
+  const { t } = useLocale();
 
   return (
     <Header
@@ -23,15 +26,18 @@ export function TopBar() {
       <Flex justify="space-between" align="center" style={{ height: "100%" }}>
         <Flex align="center" gap={token.paddingSM}>
           <Badge status={STATE_BADGE[control.state]} />
-          <Text strong>{STATE_LABEL[control.state]}</Text>
+          <Text strong>{t(`topbar.${control.state}`)}</Text>
         </Flex>
-        <ControlButton
-          isRunning={control.isRunning}
-          busy={control.busy}
-          canStart={control.canStartFromPanel}
-          onStop={control.stop}
-          onStart={control.start}
-        />
+        <Flex align="center" gap={token.padding}>
+          <LanguageSwitcher />
+          <ControlButton
+            isRunning={control.isRunning}
+            busy={control.busy}
+            canStart={control.canStartFromPanel}
+            onStop={control.stop}
+            onStart={control.start}
+          />
+        </Flex>
       </Flex>
     </Header>
   );
@@ -50,18 +56,20 @@ function ControlButton({
   onStop: () => void;
   onStart: () => void;
 }) {
+  const { t } = useLocale();
+
   if (isRunning) {
     return (
       <Popconfirm
-        title="Stop gateway?"
-        description="The proxy will be unavailable until the gateway starts again."
-        okText="Stop"
-        cancelText="Cancel"
+        title={t("topbar.stopGateway")}
+        description={t("topbar.stopGatewayDesc")}
+        okText={t("topbar.stop")}
+        cancelText={t("topbar.cancel")}
         okButtonProps={{ danger: true }}
         onConfirm={onStop}
       >
         <Button danger icon={<PoweroffOutlined />} loading={busy}>
-          Stop
+          {t("topbar.stop")}
         </Button>
       </Popconfirm>
     );
@@ -69,9 +77,9 @@ function ControlButton({
 
   if (!canStart) {
     return (
-      <Tooltip title="In development, restart it with `bun dev:desk`">
+      <Tooltip title={t("topbar.devOnlyTooltip")}>
         <Button icon={<PoweroffOutlined />} disabled>
-          Start
+          {t("topbar.start")}
         </Button>
       </Tooltip>
     );
@@ -79,7 +87,7 @@ function ControlButton({
 
   return (
     <Button type="primary" icon={<PoweroffOutlined />} loading={busy} onClick={onStart}>
-      Start
+      {t("topbar.start")}
     </Button>
   );
 }

@@ -18,10 +18,9 @@ const en = {
   "topbar.stop": "Stop",
   "topbar.start": "Start",
   "topbar.cancel": "Cancel",
-  "topbar.running": "Running",
-  "topbar.stopped": "Stopped",
-  "topbar.starting": "Starting…",
-  "topbar.stopping": "Stopping…",
+  "topbar.running": "Gateway running",
+  "topbar.offline": "Gateway stopped",
+  "topbar.unknown": "Checking…",
   "topbar.devOnlyTooltip":
     "In development, restart it with `bun dev:desk`",
 

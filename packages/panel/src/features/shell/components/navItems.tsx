@@ -14,20 +14,28 @@ import { Badge } from "antd";
 
 export type NavItem = NonNullable<MenuProps["items"]>[number];
 
-const FLAT_ITEMS: NavItem[] = [
-  { key: "/", icon: <DashboardOutlined />, label: "Dashboard" },
-  { key: "/live", icon: <ThunderboltOutlined />, label: "Live Sessions" },
-  { key: "/providers", icon: <ApiOutlined />, label: "Providers" },
-  { key: "/routing", icon: <ForkOutlined />, label: "Routing" },
-  { key: "/model-chain", icon: <PartitionOutlined />, label: "Model Chain" },
-  { key: "/openai-gateway", icon: <CloudServerOutlined />, label: "OpenAI Gateway" },
-  { key: "/history", icon: <HistoryOutlined />, label: "History" },
-  { key: "/logs", icon: <FileTextOutlined />, label: "Server Logs" },
-  { key: "/settings", icon: <SettingOutlined />, label: "Settings" },
+const NAV_KEYS = [
+  { key: "/", icon: DashboardOutlined, labelKey: "nav.dashboard" },
+  { key: "/live", icon: ThunderboltOutlined, labelKey: "nav.liveSessions" },
+  { key: "/providers", icon: ApiOutlined, labelKey: "nav.providers" },
+  { key: "/routing", icon: ForkOutlined, labelKey: "nav.routing" },
+  { key: "/model-chain", icon: PartitionOutlined, labelKey: "nav.modelChain" },
+  { key: "/openai-gateway", icon: CloudServerOutlined, labelKey: "nav.openaiGateway" },
+  { key: "/history", icon: HistoryOutlined, labelKey: "nav.history" },
+  { key: "/logs", icon: FileTextOutlined, labelKey: "nav.serverLogs" },
+  { key: "/settings", icon: SettingOutlined, labelKey: "nav.settings" },
 ];
 
-export function buildNavItems(isLive: boolean): NavItem[] {
-  return isLive ? markLiveItem(FLAT_ITEMS) : FLAT_ITEMS;
+export function buildNavItems(
+  t: (key: string, replacements?: Record<string, string>) => string,
+  isLive: boolean,
+): NavItem[] {
+  const items: NavItem[] = NAV_KEYS.map(({ key, icon: Icon, labelKey }) => ({
+    key,
+    icon: <Icon />,
+    label: t(labelKey),
+  }));
+  return isLive ? markLiveItem(items) : items;
 }
 
 function markLiveItem(items: NavItem[]): NavItem[] {
@@ -50,9 +58,8 @@ function markLiveItem(items: NavItem[]): NavItem[] {
 
 export function selectedKeyFromPath(pathname: string): string {
   if (pathname === "/") return "/";
-  for (const item of FLAT_ITEMS) {
-    const key = String(item && "key" in item ? (item.key ?? "") : "");
-    if (key && key !== "/" && (pathname === key || pathname.startsWith(`${key}/`))) return key;
+  for (const item of NAV_KEYS) {
+    if (pathname === item.key || pathname.startsWith(`${item.key}/`)) return item.key;
   }
   return "/";
 }
