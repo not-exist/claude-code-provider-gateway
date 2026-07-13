@@ -1,5 +1,6 @@
 import { DeleteOutlined, ReloadOutlined } from "@ant-design/icons";
 import { Button, Flex, Space, Typography } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import { PageHeader } from "../../../../shared/components/PageHeader.js";
 
 const { Text } = Typography;
@@ -17,22 +18,23 @@ export function HistoryHeader({
   canClear,
   pollIntervalMs,
 }: HistoryHeaderProps) {
+  const { t } = useLocale();
   const pollSeconds = Math.round(pollIntervalMs / 1000);
 
   return (
     <Flex justify="space-between" align="flex-start">
       <Flex vertical gap={2}>
         <PageHeader
-          title="History"
-          description="Session timeline, routed models, provider stats, and request log."
+          title={t("history.title")}
+          description={t("history.description")}
         />
         <Text type="secondary" style={{ fontSize: 12 }}>
-          Auto-refresh every {pollSeconds}s
+          {t("history.autoRefresh", { seconds: String(pollSeconds) })}
         </Text>
       </Flex>
       <Space>
         <Button type="dashed" icon={<ReloadOutlined />} onClick={onRefresh}>
-          Refresh
+          {t("common.refresh")}
         </Button>
         <Button
           danger
@@ -41,7 +43,7 @@ export function HistoryHeader({
           disabled={!canClear}
           onClick={onRequestClear}
         >
-          Clear history
+          {t("history.clearHistory")}
         </Button>
       </Space>
     </Flex>

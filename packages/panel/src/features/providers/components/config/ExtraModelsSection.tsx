@@ -1,6 +1,7 @@
 import { PlusOutlined } from "@ant-design/icons";
 import { Button, Flex, Input, Space, Tag, Typography } from "antd";
 import { useState } from "react";
+import { useLocale } from "../../../../shared/i18n/index.js";
 
 const { Text } = Typography;
 
@@ -17,6 +18,7 @@ export function ExtraModelsSection({
   onAdd,
   onRemove,
 }: ExtraModelsSectionProps) {
+  const { t } = useLocale();
   const [draft, setDraft] = useState("");
   const trimmed = draft.trim();
   const alreadyAdded = models.includes(trimmed);
@@ -32,7 +34,7 @@ export function ExtraModelsSection({
       <Text type="secondary">
         <Space>
           <PlusOutlined />
-          Extra models
+          {t("providerConfig.extraModelsSection")}
         </Space>
       </Text>
       <Space direction="vertical" style={{ width: "100%" }}>

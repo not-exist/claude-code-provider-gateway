@@ -1,4 +1,5 @@
 import { Divider, Flex, Input, Switch, Typography, theme } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import type { ProxyConfig } from "../../domain/types.js";
 
 const { Text } = Typography;
@@ -10,19 +11,21 @@ interface ProxyCardProps {
 
 export function ProxyCard({ value, onChange }: ProxyCardProps) {
   const { token } = theme.useToken();
+  const { t } = useLocale();
+
   return (
     <Flex vertical gap={token.padding}>
       <Flex justify="space-between" align="center" gap={16}>
         <Flex vertical>
           <Text strong style={{ fontSize: 15 }}>
-            Enable outbound proxy
+            {t("settings.proxy.enable")}
           </Text>
           <Text type="secondary" style={{ fontSize: 13 }}>
-            Route OpenAI OAuth and external provider requests through a proxy
+            {t("settings.proxy.description")}
           </Text>
         </Flex>
         <Switch
-          aria-label="Enable proxy"
+          aria-label={t("settings.proxy.enable")}
           checked={value.enabled}
           onChange={(v) => onChange({ enabled: v })}
         />
@@ -32,7 +35,7 @@ export function ProxyCard({ value, onChange }: ProxyCardProps) {
 
       <Flex vertical gap={token.paddingXS}>
         <Text id="proxy-url-label" strong style={{ opacity: value.enabled ? 1 : 0.4 }}>
-          Proxy URL
+          {t("settings.proxy.url")}
         </Text>
         <Input
           aria-labelledby="proxy-url-label"
@@ -42,7 +45,7 @@ export function ProxyCard({ value, onChange }: ProxyCardProps) {
           onChange={(e) => onChange({ url: e.target.value })}
         />
         <Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
-          Takes effect on next gateway restart.
+          {t("settings.proxy.restartNotice")}
         </Text>
       </Flex>
     </Flex>

@@ -1,7 +1,7 @@
 import type { TableColumnsType } from "antd";
 import { Tag, Tooltip, Typography } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import { ProviderLogo } from "../../../providers/components/grid/ProviderLogo.js";
-import { formatTime } from "../../domain/format.js";
 import { providerLabel } from "../../domain/labels.js";
 import type { ProviderStat } from "../../domain/types.js";
 
@@ -9,15 +9,17 @@ const { Text } = Typography;
 
 export type ProviderStatsRow = readonly [string, ProviderStat];
 
-export function getProviderStatsColumns(): TableColumnsType<ProviderStatsRow> {
+export function useProviderStatsColumns(): TableColumnsType<ProviderStatsRow> {
+  const { locale, t } = useLocale();
+
   return [
     {
-      title: "Provider",
+      title: t("common.provider"),
       key: "n",
       render: ([id]) => <ProviderName providerId={id} />,
     },
     {
-      title: "Requests",
+      title: t("history.requests"),
       key: "req",
       width: 85,
       align: "right",
@@ -31,7 +33,7 @@ export function getProviderStatsColumns(): TableColumnsType<ProviderStatsRow> {
       render: ([, stat]) => <ErrorCount value={stat.errors} />,
     },
     {
-      title: "Avg latency",
+      title: t("history.avgLatency"),
       key: "lat",
       width: 100,
       align: "right",
@@ -41,7 +43,9 @@ export function getProviderStatsColumns(): TableColumnsType<ProviderStatsRow> {
       title: "Last activity",
       key: "la",
       render: ([, stat]) => (
-        <Text type="secondary">{stat.lastActivityAt ? formatTime(stat.lastActivityAt) : "—"}</Text>
+        <Text type="secondary">
+          {stat.lastActivityAt ? new Date(stat.lastActivityAt).toLocaleTimeString(locale) : "—"}
+        </Text>
       ),
     },
     {

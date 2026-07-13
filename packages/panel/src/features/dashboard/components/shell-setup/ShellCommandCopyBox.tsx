@@ -1,5 +1,6 @@
 import { CopyOutlined } from "@ant-design/icons";
 import { Button, Flex, Typography, theme } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 
 const { Paragraph } = Typography;
 
@@ -11,6 +12,7 @@ interface ShellCommandCopyBoxProps {
 
 export function ShellCommandCopyBox({ command, copied, onCopy }: ShellCommandCopyBoxProps) {
   const { token } = theme.useToken();
+  const { t } = useLocale();
 
   return (
     <Flex
@@ -41,7 +43,7 @@ export function ShellCommandCopyBox({ command, copied, onCopy }: ShellCommandCop
         type={copied ? "primary" : "default"}
         onClick={() => onCopy("oneliner", command)}
       >
-        {copied ? "Copied" : "Copy"}
+        {copied ? t("common.copied") : t("common.copy")}
       </Button>
     </Flex>
   );

@@ -5,11 +5,11 @@ export function stripModelPrefix(model: string): string {
   return slash >= 0 ? model.slice(slash + 1) : model;
 }
 
-export function formatDate(ts: number): string {
+export function formatDate(ts: number, locale?: string, todayLabel = "today"): string {
   const d = new Date(ts);
   return d.toDateString() === new Date().toDateString()
-    ? `today ${d.toLocaleTimeString()}`
-    : d.toLocaleString();
+    ? `${todayLabel} ${d.toLocaleTimeString(locale)}`
+    : d.toLocaleString(locale);
 }
 
 export function formatTime(ts: number): string {

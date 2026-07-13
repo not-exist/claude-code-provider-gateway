@@ -1,5 +1,6 @@
 import { Divider, Flex } from "antd";
 import { useEffect } from "react";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import { SUGGESTED_MODELS } from "../../data/suggestedModels.js";
 import { getProviderKind, isProviderReady } from "../../domain/status.js";
 import type { CopilotFlow, ProviderInfo } from "../../domain/types.js";
@@ -43,6 +44,7 @@ export function ProviderConfigContent({
   copilotFlow,
   handlers,
 }: ProviderConfigContentProps) {
+  const { t } = useLocale();
   const providerKind = getProviderKind(provider);
   const ready = isProviderReady(provider);
   const { models, loading, load } = useProviderModels(provider.id);
@@ -79,8 +81,8 @@ export function ProviderConfigContent({
     <ModelPickerSection
       models={provider.models ?? []}
       suggestions={SUGGESTED_MODELS[provider.id as keyof typeof SUGGESTED_MODELS]}
-      title={provider.custom ? "Manual models" : "Extra models"}
-      placeholder="provider/model-id"
+      title={provider.custom ? "Manual models" : t("providerConfig.extraModelsSection")}
+      placeholder={t("providerConfig.extraModelsPlaceholder")}
       onAdd={(model) => handlers.onAddModel(provider, model)}
       onRemove={(model) => handlers.onRemoveModel(provider, model)}
     />

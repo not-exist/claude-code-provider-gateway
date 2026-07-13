@@ -1,5 +1,6 @@
 import { CheckCircleOutlined, DatabaseOutlined, WarningOutlined } from "@ant-design/icons";
 import { theme } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import { MetricSummaryGrid } from "../../../../shared/components/MetricSummaryGrid.js";
 
 interface HistorySummaryProps {
@@ -9,12 +10,13 @@ interface HistorySummaryProps {
 }
 
 export function HistorySummary({ archived, totalRequests, totalErrors }: HistorySummaryProps) {
+  const { t } = useLocale();
   const { token } = theme.useToken();
 
   const metrics = [
     {
       id: "archived",
-      title: "Archived Sessions",
+      title: t("history.archivedSessions"),
       value: archived,
       icon: <DatabaseOutlined />,
       color: token.colorTextSecondary,
@@ -22,7 +24,7 @@ export function HistorySummary({ archived, totalRequests, totalErrors }: History
     },
     {
       id: "total-requests",
-      title: "Total Requests",
+      title: t("history.totalRequests"),
       value: totalRequests,
       icon: <CheckCircleOutlined />,
       color: token.colorSuccess,

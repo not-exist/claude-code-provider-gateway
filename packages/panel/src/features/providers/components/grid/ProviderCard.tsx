@@ -1,5 +1,6 @@
 import { StarFilled, StarOutlined } from "@ant-design/icons";
 import { Badge, Button, Card, Space, Switch, Tag, Typography, theme } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import { COMING_SOON_PROVIDERS } from "../../domain/constants.js";
 import { isProviderReady } from "../../domain/status.js";
 import type { ProviderInfo, TestResult } from "../../domain/types.js";
@@ -31,8 +32,9 @@ export function ProviderCard({
   onToggleFavorite,
 }: ProviderCardProps) {
   const { token } = theme.useToken();
+  const { t } = useLocale();
   const comingSoon = COMING_SOON_PROVIDERS.has(p.id);
-  const status = getProviderStatus(p, comingSoon);
+  const status = getProviderStatus(p, comingSoon, t);
   const interactive = !comingSoon;
 
   return (
@@ -52,7 +54,11 @@ export function ProviderCard({
       }
       role={interactive ? "button" : undefined}
       tabIndex={interactive ? 0 : -1}
-      aria-label={interactive ? `Configure ${p.label}` : `${p.label} — coming soon`}
+      aria-label={
+        interactive
+          ? `${t("providers.configure")} ${p.label}`
+          : `${p.label} — ${t("status.comingSoon")}`
+      }
       aria-disabled={!interactive}
       style={{
         width: "100%",
@@ -124,7 +130,9 @@ export function ProviderCard({
                   e.stopPropagation();
                   onToggleFavorite(p, e);
                 }}
-                aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                aria-label={
+                  isFavorite ? t("providers.removeFavorite") : t("providers.addFavorite")
+                }
               />
             )}
             <Switch
@@ -132,7 +140,7 @@ export function ProviderCard({
               onClick={(_, event) => event.stopPropagation()}
               onChange={() => onToggleEnabled(p.id, p.enabled)}
               size="small"
-              aria-label={`${p.enabled ? "Disable" : "Enable"} ${p.label}`}
+              aria-label={`${t(p.enabled ? "common.disable" : "common.enable")} ${p.label}`}
             />
           </Space>
         )}
@@ -141,18 +149,22 @@ export function ProviderCard({
   );
 }
 
-function getProviderStatus(provider: ProviderInfo, comingSoon: boolean): ProviderStatus {
+function getProviderStatus(
+  provider: ProviderInfo,
+  comingSoon: boolean,
+  t: (key: string, replacements?: Record<string, string>) => string,
+): ProviderStatus {
   const ready = isProviderReady(provider);
 
   if (comingSoon) {
-    return { badge: "processing", label: "Coming soon", ready: false };
+    return { badge: "processing", label: t("status.comingSoon"), ready: false };
   }
 
   if (!provider.enabled) {
-    return { badge: "default", label: "Disabled", ready };
+    return { badge: "default", label: t("status.disabled"), ready };
   }
 
   return ready
-    ? { badge: "success", label: "Ready", ready }
-    : { badge: "warning", label: "Needs Config", ready };
+    ? { badge: "success", label: t("status.configured"), ready }
+    : { badge: "warning", label: t("status.notConfigured"), ready };
 }

@@ -7,6 +7,7 @@ import {
 } from "@ant-design/icons";
 import type { TableColumnsType } from "antd";
 import { Button, Popconfirm, Space, Tag, Typography, theme } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import { formatUptime } from "../../../../shared/utils/time.js";
 import { commandFor, formatDate, topModel } from "../../domain/format.js";
 import { providerLabel } from "../../domain/labels.js";
@@ -27,19 +28,20 @@ export function useSessionColumns({
   deletingId,
   exportingId,
 }: SessionColumnsOptions): TableColumnsType<Session> {
+  const { locale, t } = useLocale();
   const { token } = theme.useToken();
   const activeDeletingId = deletingId ?? null;
   const activeExportingId = exportingId ?? null;
 
   const columns: TableColumnsType<Session> = [
     {
-      title: "Status",
+      title: t("common.status"),
       key: "status",
       width: 130,
       render: (_, session) => <SessionStatusTag status={session.status} />,
     },
     {
-      title: "Command",
+      title: t("history.command"),
       key: "command",
       ellipsis: true,
       render: (_, session) => (
@@ -52,19 +54,23 @@ export function useSessionColumns({
       ),
     },
     {
-      title: "Top model",
+      title: t("history.topModel"),
       key: "model",
       ellipsis: true,
       render: (_, session) => <TopModelText session={session} />,
     },
     {
-      title: "Started",
+      title: t("history.started"),
       key: "started",
       width: 160,
-      render: (_, session) => <Text type="secondary">{formatDate(session.startedAt)}</Text>,
+      render: (_, session) => (
+        <Text type="secondary">
+          {formatDate(session.startedAt, locale, t("history.today"))}
+        </Text>
+      ),
     },
     {
-      title: "Duration",
+      title: t("history.duration"),
       key: "duration",
       width: 90,
       render: (_, session) => (
@@ -72,7 +78,7 @@ export function useSessionColumns({
       ),
     },
     {
-      title: "Requests",
+      title: t("history.requests"),
       dataIndex: "totalRequests",
       key: "requests",
       width: 90,
@@ -105,17 +111,17 @@ export function useSessionColumns({
                 activeDeletingId === session.id ||
                 (activeExportingId !== null && activeExportingId !== session.id)
               }
-              aria-label={`Export session ${session.id} as JSON`}
-              title="Export as JSON"
+              aria-label={t("history.exportSessionAria", { id: session.id })}
+              title={t("common.exportJson")}
               onClick={() => onExport(session)}
             />
           )}
           {onDelete && (
             <Popconfirm
-              title="Delete this session?"
-              okText="Delete"
+              title={t("historyDetails.deleteSessionConfirm")}
+              okText={t("common.delete")}
               okButtonProps={{ danger: true }}
-              cancelText="Cancel"
+              cancelText={t("common.cancel")}
               placement="left"
               overlayInnerStyle={{ background: "#1a1915" }}
               onConfirm={() => onDelete(session.id)}
@@ -127,8 +133,8 @@ export function useSessionColumns({
                 icon={<DeleteOutlined />}
                 loading={activeDeletingId === session.id}
                 disabled={activeExportingId === session.id}
-                aria-label={`Delete session ${session.id}`}
-                title="Delete Session"
+                aria-label={t("history.deleteSessionAria", { id: session.id })}
+                title={t("historyDetails.deleteSession")}
               />
             </Popconfirm>
           )}

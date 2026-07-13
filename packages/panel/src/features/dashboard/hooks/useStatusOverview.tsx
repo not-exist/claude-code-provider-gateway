@@ -7,6 +7,7 @@ import {
 } from "@ant-design/icons";
 import { theme } from "antd";
 import type { ReactNode } from "react";
+import { useLocale } from "../../../shared/i18n/index.js";
 import { formatUptime } from "../../../shared/utils/time.js";
 import type { GatewayStatus } from "../domain/types.js";
 
@@ -23,31 +24,32 @@ export function useStatusOverview(
   topModel?: string | null,
 ): StatusOverviewCard[] {
   const { token } = theme.useToken();
+  const { t } = useLocale();
 
   return [
     {
-      title: "Status",
-      value: getStatusLabel(status),
+      title: t("common.status"),
+      value: getStatusLabel(status, t),
       icon: getStatusIcon(status),
       color: getStatusColor(status, token),
       active: !!status?.running,
     },
     {
-      title: "Uptime",
+      title: t("dashboard.uptime"),
       value: status ? formatUptime(status.uptimeMs) : "—",
       icon: <ClockCircleOutlined />,
       color: token.colorPrimary,
       active: !!status,
     },
     {
-      title: "Top Model",
+      title: t("dashboard.topModel"),
       value: topModel ?? "—",
       icon: <RobotOutlined />,
       color: token.colorInfo,
       active: !!topModel,
     },
     {
-      title: "Daemon PID",
+      title: t("dashboard.daemonPid"),
       value: status?.pid?.toString() ?? "—",
       icon: <DesktopOutlined />,
       color: token.colorWarning,
@@ -56,9 +58,9 @@ export function useStatusOverview(
   ];
 }
 
-function getStatusLabel(status: GatewayStatus | null): string {
+function getStatusLabel(status: GatewayStatus | null, t: (key: string) => string): string {
   if (!status) return "—";
-  return status.running ? "Running" : "Stopped";
+  return status.running ? t("topbar.running") : t("topbar.offline");
 }
 
 function getStatusIcon(status: GatewayStatus | null): ReactNode {

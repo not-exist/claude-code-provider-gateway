@@ -1,4 +1,5 @@
 import { Alert, Col, Empty, Flex, Row, Typography, theme } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import type { ProviderGroup } from "../../domain/providerGroups.js";
 import type { ProviderInfo, TestResult } from "../../domain/types.js";
 import { ProviderCard } from "../grid/ProviderCard.js";
@@ -25,10 +26,11 @@ export function AllProvidersTab({
   onToggleFavorite,
 }: AllProvidersTabProps) {
   const { token } = theme.useToken();
+  const { t } = useLocale();
 
   if (groups.length === 0 && customProviders.length === 0) {
     return (
-      <Empty description="No providers found matching your filters" style={{ margin: "40px 0" }} />
+      <Empty description={t("providers.noProvidersFound")} style={{ margin: "40px 0" }} />
     );
   }
 
@@ -74,11 +76,12 @@ function CustomProvidersSection({
   onToggleFavorite: (provider: ProviderInfo, event: React.MouseEvent) => void;
 }) {
   const { token } = theme.useToken();
+  const { t } = useLocale();
 
   return (
     <Flex vertical gap={token.paddingSM}>
       <Typography.Title level={5} style={{ margin: 0, fontWeight: 600 }}>
-        Custom Providers (OpenAI/Anthropic Compatible)
+        {t("providers.customProviders")}
       </Typography.Title>
 
       {providers.length === 0 ? (
@@ -91,8 +94,7 @@ function CustomProvidersSection({
             textAlign: "center",
           }}
         >
-          No custom providers. Use the tab actions above to add OpenAI or Anthropic compatible
-          endpoints.
+          {t("providers.customProvidersEmpty")}
         </div>
       ) : (
         <Row gutter={[token.paddingMD, token.paddingMD]} align="stretch">
@@ -138,11 +140,12 @@ export function FavoritesTab({
   onDismissTip,
 }: FavoritesTabProps) {
   const { token } = theme.useToken();
+  const { t } = useLocale();
 
   if (favorites.length === 0) {
     return (
       <Empty
-        description="No favorite providers yet. Star some providers from the All Providers tab!"
+        description={t("providers.noFavoritesYet")}
         style={{ margin: "40px 0" }}
       />
     );
@@ -156,7 +159,7 @@ export function FavoritesTab({
     <Flex vertical gap={token.paddingLG}>
       {!tipDismissed && (
         <Alert
-          message="Tip: You can drag and drop cards to reorganize your favorites."
+          message={t("providers.favoritesTipDismissed")}
           type="info"
           showIcon
           closable
@@ -175,7 +178,7 @@ export function FavoritesTab({
         />
       ) : (
         <Empty
-          description="No favorite providers found matching your filters"
+          description={t("providers.noFavoritesFilter")}
           style={{ margin: "40px 0" }}
         />
       )}

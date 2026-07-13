@@ -1,6 +1,7 @@
 import { ClearOutlined, PauseCircleOutlined, PlayCircleOutlined } from "@ant-design/icons";
 import { Badge, Button, Card, Flex, Space, Typography, theme } from "antd";
 import { useEffect, useRef } from "react";
+import { useLocale } from "../../../../shared/i18n/index.js";
 
 const { Text } = Typography;
 
@@ -13,6 +14,7 @@ interface LiveLogsPanelProps {
 
 export function LiveLogsPanel({ logs, paused, onTogglePaused, onClear }: LiveLogsPanelProps) {
   const { token } = theme.useToken();
+  const { t } = useLocale();
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -26,9 +28,9 @@ export function LiveLogsPanel({ logs, paused, onTogglePaused, onClear }: LiveLog
       title={
         <Space>
           <Badge status={paused ? "warning" : "processing"} />
-          <span>Live Logs</span>
+          <span>{t("dashboard.liveLogs")}</span>
           <Text type="secondary" style={{ fontWeight: token.fontWeightStrong }}>
-            {logs.length} lines
+            {t("dashboard.logLines", { count: String(logs.length) })}
           </Text>
         </Space>
       }
@@ -40,10 +42,10 @@ export function LiveLogsPanel({ logs, paused, onTogglePaused, onClear }: LiveLog
             danger={paused}
             type={paused ? "primary" : "default"}
           >
-            {paused ? "Resume" : "Pause"}
+            {paused ? t("dashboard.resume") : t("dashboard.pause")}
           </Button>
           <Button icon={<ClearOutlined />} onClick={onClear}>
-            Clear
+            {t("common.clear")}
           </Button>
         </Space>
       }
@@ -68,7 +70,7 @@ export function LiveLogsPanel({ logs, paused, onTogglePaused, onClear }: LiveLog
       >
         {logs.length === 0 ? (
           <Text type="secondary" style={{ opacity: 0.4 }}>
-            Waiting for log activity…
+            {t("dashboard.waitingForLogActivity")}
           </Text>
         ) : (
           // biome-ignore lint/suspicious/noArrayIndexKey: log lines are append-only and can repeat exactly.

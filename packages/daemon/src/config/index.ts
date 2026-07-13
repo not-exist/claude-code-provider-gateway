@@ -101,6 +101,7 @@ export function buildDefaultConfig(): Config {
     panelSettings: {
       favoriteProviders: [],
       favoritesTipDismissed: false,
+      locale: "en",
     },
   };
 }

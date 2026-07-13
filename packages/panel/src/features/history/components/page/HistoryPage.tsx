@@ -1,5 +1,6 @@
 import { App, Card, Col, Empty, Flex, Row, Skeleton, Typography, theme } from "antd";
 import { useCallback } from "react";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import type { Session } from "../../domain/types.js";
 import { useHistoryPage } from "../../hooks/useHistoryPage.js";
 import { ProvidersTable } from "../tables/ProvidersTable.js";
@@ -59,6 +60,7 @@ function HistorySkeletonSummary() {
 }
 
 export default function HistoryPage() {
+  const { t } = useLocale();
   const { message } = App.useApp();
   const { token } = theme.useToken();
   const page = useHistoryPage();
@@ -67,15 +69,15 @@ export default function HistoryPage() {
       try {
         const result = await page.exportSession(session);
         if (result.target === "desktop") {
-          message.success(`Session JSON saved to ${result.path}`);
+          message.success(t("history.exportedSessionDesktop", { path: result.path }));
         } else {
-          message.success(`Downloaded ${result.fileName}`);
+          message.success(t("history.exportedSessionDownload", { fileName: result.fileName }));
         }
       } catch (err) {
         message.error(err instanceof Error ? err.message : "Failed to export session JSON");
       }
     },
-    [message, page],
+    [message, page, t],
   );
 
   return (
@@ -109,7 +111,7 @@ export default function HistoryPage() {
         </Card>
       ) : page.sessions.length === 0 ? (
         <Card>
-          <Empty description={<Text type="secondary">No sessions recorded yet.</Text>} />
+          <Empty description={<Text type="secondary">{t("history.noSessionsYet")}</Text>} />
         </Card>
       ) : (
         <>

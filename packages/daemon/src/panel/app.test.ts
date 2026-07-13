@@ -411,11 +411,13 @@ test("PUT /api/config tolerates legacy config without panel settings", async () 
     panelSettings?: {
       favoriteProviders: string[];
       favoritesTipDismissed: boolean;
+      locale: "en" | "zh-CN";
     };
   };
   assert.deepEqual(body.panelSettings, {
     favoriteProviders: ["openrouter"],
     favoritesTipDismissed: false,
+    locale: "en",
   });
 });
 

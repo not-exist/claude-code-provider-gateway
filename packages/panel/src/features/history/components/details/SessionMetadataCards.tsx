@@ -1,4 +1,5 @@
 import { Flex, Typography, theme } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import { formatUptime } from "../../../../shared/utils/time.js";
 import { formatDate } from "../../domain/format.js";
 import { providerLabel } from "../../domain/labels.js";
@@ -11,21 +12,27 @@ interface SessionMetadataCardsProps {
 }
 
 export function SessionMetadataCards({ session }: SessionMetadataCardsProps) {
+  const { locale, t } = useLocale();
   const { token } = theme.useToken();
 
   const items = [
-    { label: "Started", value: formatDate(session.startedAt) },
     {
-      label: "Ended",
-      value: session.endedAt ? formatDate(session.endedAt) : "Running",
+      label: t("history.started"),
+      value: formatDate(session.startedAt, locale, t("history.today")),
     },
-    { label: "Duration", value: formatUptime(session.durationMs) },
-    { label: "Mode", value: session.modelMode },
     {
-      label: "Providers",
+      label: t("history.ended"),
+      value: session.endedAt
+        ? formatDate(session.endedAt, locale, t("history.today"))
+        : t("history.running"),
+    },
+    { label: t("history.duration"), value: formatUptime(session.durationMs) },
+    { label: t("history.mode"), value: session.modelMode },
+    {
+      label: t("liveSession.providers"),
       value:
         session.modelMode === "all"
-          ? session.enabledProviders.map(providerLabel).join(", ") || "none"
+          ? session.enabledProviders.map(providerLabel).join(", ") || t("history.none")
           : providerLabel(session.activeProvider),
     },
   ];

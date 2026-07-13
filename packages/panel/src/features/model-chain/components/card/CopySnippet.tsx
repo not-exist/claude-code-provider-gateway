@@ -1,23 +1,25 @@
 import { CopyOutlined } from "@ant-design/icons";
 import { App, Tooltip, Typography, theme } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import { useCopyToClipboard } from "../../../../shared/hooks/useCopyToClipboard.js";
 
 const { Text } = Typography;
 
 export function CopySnippet({ snippet }: { snippet: string }) {
+  const { t } = useLocale();
   const { token } = theme.useToken();
   const { message } = App.useApp();
   const { copiedKey, copy } = useCopyToClipboard();
   const copied = copiedKey === snippet;
 
   return (
-    <Tooltip title={copied ? "Copied!" : "Copy"}>
+    <Tooltip title={copied ? t("common.copied") : t("common.copy")}>
       <button
         type="button"
         onClick={(e) => {
           e.stopPropagation();
           copy(snippet, snippet);
-          message.success("Command copied to clipboard");
+          message.success(t("modelChain.commandCopied"));
         }}
         style={{
           cursor: "pointer",

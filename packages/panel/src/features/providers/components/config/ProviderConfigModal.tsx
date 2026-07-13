@@ -1,5 +1,6 @@
 import { ExportOutlined } from "@ant-design/icons";
 import { Button, Modal, Switch } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import { openExternal } from "../../../../shared/openExternal.js";
 import { getApiKeyLink } from "../../domain/apiKeyLinks.js";
 import { canTestProvider } from "../../domain/status.js";
@@ -35,18 +36,20 @@ export function ProviderConfigModal({
   handlers,
   onToggleEnabled,
 }: ProviderConfigModalProps) {
+  const { t } = useLocale();
+
   if (!p) return null;
 
   return (
     <Modal
       centered
-      title={<ProviderConfigTitle provider={p} onToggleEnabled={onToggleEnabled} />}
+      title={<ProviderConfigTitle provider={p} onToggleEnabled={onToggleEnabled} t={t} />}
       open={open}
       onCancel={onClose}
       footer={[
         p.custom && (
           <Button key="delete" danger onClick={() => handlers.onRequestDeleteProvider(p.id)}>
-            Delete Provider
+            {t("common.delete")}
           </Button>
         ),
         <Button
@@ -55,10 +58,10 @@ export function ProviderConfigModal({
           disabled={!canTestProvider(p)}
           onClick={() => handlers.onTest(p.id)}
         >
-          Test Connection
+          {t("providerConfig.testConnection")}
         </Button>,
         <Button key="close" type="primary" onClick={onClose}>
-          Done
+          {t("common.close")}
         </Button>,
       ]}
       width={600}
@@ -78,9 +81,11 @@ export function ProviderConfigModal({
 function ProviderConfigTitle({
   provider,
   onToggleEnabled,
+  t,
 }: {
   provider: ProviderInfo;
   onToggleEnabled: (id: string, currentlyEnabled: boolean) => void;
+  t: (key: string, replacements?: Record<string, string>) => string;
 }) {
   const apiKeyUrl = getApiKeyLink(provider.id);
 
@@ -100,19 +105,21 @@ function ProviderConfigTitle({
           logoUrl={provider.logoUrl}
           size={28}
         />
-        <span style={{ fontSize: 18 }}>{provider.label} Configuration</span>
+        <span style={{ fontSize: 18 }}>
+          {provider.label} {t("providerConfig.configuration")}
+        </span>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         {apiKeyUrl && (
           <Button size="small" icon={<ExportOutlined />} onClick={() => openExternal(apiKeyUrl)}>
-            Get API Key
+            {t("providerConfig.getApiKey")}
           </Button>
         )}
         <Switch
           size="small"
           checked={provider.enabled}
           onChange={() => onToggleEnabled(provider.id, provider.enabled)}
-          aria-label={`${provider.enabled ? "Disable" : "Enable"} ${provider.label}`}
+          aria-label={`${t(provider.enabled ? "common.disable" : "common.enable")} ${provider.label}`}
         />
       </div>
     </div>

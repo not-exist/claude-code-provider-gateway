@@ -7,11 +7,15 @@ export interface ProviderFilters {
   status: ProviderStatusFilter;
 }
 
-export const PROVIDER_STATUS_OPTIONS: Array<{ label: string; value: ProviderStatusFilter }> = [
-  { label: "All Statuses", value: "all" },
-  { label: "Active", value: "active" },
-  { label: "Inactive", value: "inactive" },
-];
+export function getProviderStatusOptions(
+  t: (key: string, replacements?: Record<string, string>) => string,
+): Array<{ label: string; value: ProviderStatusFilter }> {
+  return [
+    { label: t("status.all"), value: "all" },
+    { label: t("status.enabled"), value: "active" },
+    { label: t("status.disabled"), value: "inactive" },
+  ];
+}
 
 export function filterProviders(
   providers: ProviderInfo[],

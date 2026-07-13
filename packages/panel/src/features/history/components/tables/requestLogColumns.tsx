@@ -1,34 +1,36 @@
 import type { TableColumnsType } from "antd";
 import { Space, Tag, Tooltip, Typography, theme } from "antd";
-import { formatNumber, formatTime } from "../../domain/format.js";
+import { useLocale } from "../../../../shared/i18n/index.js";
+import { formatNumber } from "../../domain/format.js";
 import { providerLabel } from "../../domain/labels.js";
 import type { RequestLogEntry } from "../../domain/types.js";
 
 const { Text } = Typography;
 
 export function useRequestLogColumns(): TableColumnsType<RequestLogEntry> {
+  const { locale, t } = useLocale();
   const { token } = theme.useToken();
 
   return [
     {
-      title: "Time",
+      title: t("historyDetails.time"),
       key: "t",
       width: 90,
       render: (_, entry) => (
         <Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
-          {formatTime(entry.timestamp)}
+          {new Date(entry.timestamp).toLocaleTimeString(locale)}
         </Text>
       ),
     },
     {
-      title: "Requested",
+      title: t("historyDetails.requested"),
       dataIndex: "requestedModel",
       key: "req",
       ellipsis: true,
       render: (value: string) => <ModelText value={value} color={token.colorInfoText} />,
     },
     {
-      title: "Provider model",
+      title: t("historyDetails.providerModel"),
       key: "pm",
       ellipsis: true,
       render: (_, entry) => (
@@ -36,7 +38,7 @@ export function useRequestLogColumns(): TableColumnsType<RequestLogEntry> {
       ),
     },
     {
-      title: "Tokens",
+      title: t("history.tokens"),
       dataIndex: "inputTokens",
       key: "tok",
       width: 80,
@@ -44,7 +46,7 @@ export function useRequestLogColumns(): TableColumnsType<RequestLogEntry> {
       render: (value: number) => <MutedMonoText value={formatNumber(value)} />,
     },
     {
-      title: "Latency",
+      title: t("historyDetails.latency"),
       dataIndex: "latencyMs",
       key: "lat",
       width: 80,
@@ -52,7 +54,7 @@ export function useRequestLogColumns(): TableColumnsType<RequestLogEntry> {
       render: (value: number) => <MutedMonoText value={`${value}ms`} />,
     },
     {
-      title: "Status",
+      title: t("common.status"),
       dataIndex: "status",
       key: "s",
       width: 70,
@@ -61,19 +63,19 @@ export function useRequestLogColumns(): TableColumnsType<RequestLogEntry> {
       ),
     },
     {
-      title: "Savers",
+      title: t("historyDetails.savers"),
       key: "tokenSavers",
       width: 160,
       render: (_, entry) => <TokenSaversCell entry={entry} />,
     },
     {
-      title: "Response",
+      title: t("historyDetails.response"),
       key: "has_resp",
       width: 90,
       render: (_, entry) => <YesNoTag active={!!entry.response} />,
     },
     {
-      title: "Preview",
+      title: t("historyDetails.preview"),
       key: "has_preview",
       width: 85,
       render: (_, entry) => <YesNoTag active={!!entry.requestPreview} />,
@@ -85,13 +87,13 @@ export function useRequestLogColumns(): TableColumnsType<RequestLogEntry> {
       render: (_, entry) => <WarningsCell entry={entry} />,
     },
     {
-      title: "User Input",
+      title: t("historyDetails.userInput"),
       key: "has_user",
       width: 95,
       render: (_, entry) => <YesNoTag active={hasUserInput(entry)} />,
     },
     {
-      title: "Error",
+      title: t("common.error"),
       dataIndex: "error",
       key: "err",
       ellipsis: true,

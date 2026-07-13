@@ -28,6 +28,7 @@ import {
   theme,
 } from "antd";
 import { useState } from "react";
+import { useLocale } from "../../../shared/i18n/index.js";
 import { LoadingState } from "../../../shared/components/LoadingState.js";
 import { PageHeader } from "../../../shared/components/PageHeader.js";
 import { useCopyToClipboard } from "../../../shared/hooks/useCopyToClipboard.js";
@@ -39,6 +40,7 @@ type OpenAIGatewayModel = OpenAIGatewayModels["models"][number];
 
 export default function OpenAIGatewayPage() {
   const { token } = theme.useToken();
+  const { t } = useLocale();
   const { data, status, cursorFields, reload, models } = useOpenAIGateway();
   const { copiedKey, copy } = useCopyToClipboard();
   const [modelQuery, setModelQuery] = useState("");
@@ -59,7 +61,7 @@ export default function OpenAIGatewayPage() {
 
   const tableColumns: TableProps<OpenAIGatewayModel>["columns"] = [
     {
-      title: "Model ID",
+      title: t("openaiGateway.modelId"),
       dataIndex: "id",
       key: "id",
       render: (text: string) => (
@@ -81,14 +83,14 @@ export default function OpenAIGatewayPage() {
               )
             }
             onClick={() => copy(`model-${text}`, text)}
-            aria-label={`Copy model ${text}`}
-            title={`Copy model ${text}`}
+            aria-label={t("openaiGateway.copyModel", { model: text })}
+            title={t("openaiGateway.copyModel", { model: text })}
           />
         </Flex>
       ),
     },
     {
-      title: "Provider",
+      title: t("openaiGateway.provider"),
       dataIndex: "ownedBy",
       key: "ownedBy",
       width: 120,
@@ -104,7 +106,15 @@ export default function OpenAIGatewayPage() {
       label: (
         <Space>
           <CodeOutlined />
-          {example.title}
+          {t(
+            example.key === "models"
+              ? "openaiGateway.listModelsExample"
+              : example.key === "chat"
+                ? "openaiGateway.chatCompletionExample"
+                : example.key === "stream"
+                  ? "openaiGateway.streamingChatExample"
+                  : example.title,
+          )}
         </Space>
       ),
       children: (
@@ -121,7 +131,7 @@ export default function OpenAIGatewayPage() {
             }
             onClick={() => copy(`example-${example.key}`, example.command)}
           >
-            Copy
+            {t("common.copy")}
           </Button>
           <pre
             style={{
@@ -141,19 +151,34 @@ export default function OpenAIGatewayPage() {
       ),
     })) || [];
 
+  const getCursorFieldLabel = (key: string, fallback: string) => {
+    switch (key) {
+      case "baseUrl":
+        return t("openaiGateway.apiBase");
+      case "apiKey":
+        return t("openaiGateway.apiKey");
+      case "modelsUrl":
+        return t("openaiGateway.modelsEndpoint");
+      case "chatCompletionsUrl":
+        return t("openaiGateway.chatCompletionsEndpoint");
+      default:
+        return fallback;
+    }
+  };
+
   return (
     <Flex vertical gap={token.paddingLG}>
       <Flex justify="space-between" align="flex-start" wrap="wrap" gap={token.padding}>
         <PageHeader
-          title="OpenAI Gateway"
-          description="Expose this local daemon as an OpenAI-compatible endpoint."
+          title={t("openaiGateway.title")}
+          description={t("openaiGateway.description")}
         />
         {models.status === "success" && (
           <Badge count={modelList.length} color="blue" showZero overflowCount={999}>
             <Card size="small" styles={{ body: { padding: "8px 16px" } }}>
               <Space>
                 <ApiOutlined style={{ color: token.colorPrimary }} />
-                <Text strong>Active Models</Text>
+                <Text strong>{t("openaiGateway.availableModels")}</Text>
               </Space>
             </Card>
           </Badge>
@@ -193,7 +218,7 @@ export default function OpenAIGatewayPage() {
                 title={
                   <Space>
                     <ApiOutlined />
-                    Connection Details
+                    {t("openaiGateway.connectionDetails")}
                   </Space>
                 }
                 style={{ height: "100%" }}
@@ -203,7 +228,7 @@ export default function OpenAIGatewayPage() {
                   {cursorFields.map((field) => (
                     <Flex key={field.key} vertical gap={4}>
                       <Text type="secondary" style={{ fontSize: 12 }}>
-                        {field.label}
+                        {getCursorFieldLabel(field.key, field.label)}
                       </Text>
                       <Input
                         readOnly
@@ -221,7 +246,9 @@ export default function OpenAIGatewayPage() {
                               )
                             }
                             onClick={() => copy(field.key, field.value)}
-                            aria-label={`Copy ${field.label}`}
+                            aria-label={t("openaiGateway.copyField", {
+                              field: getCursorFieldLabel(field.key, field.label),
+                            })}
                           />
                         }
                         style={{ fontFamily: "Geist Mono, monospace" }}
@@ -237,13 +264,13 @@ export default function OpenAIGatewayPage() {
                 title={
                   <Space>
                     <ApiOutlined />
-                    Model Explorer
+                    {t("openaiGateway.modelExplorer")}
                   </Space>
                 }
                 extra={
                   <Space wrap>
                     <Input
-                      placeholder="Search models..."
+                      placeholder={t("openaiGateway.modelsSearchPlaceholder")}
                       prefix={<SearchOutlined />}
                       value={modelQuery}
                       onChange={(e) => setModelQuery(e.target.value)}
@@ -255,8 +282,8 @@ export default function OpenAIGatewayPage() {
                       loading={models.status === "loading"}
                       onClick={models.reload}
                       type="text"
-                      aria-label="Refresh models"
-                      title="Refresh models"
+                      aria-label={t("openaiGateway.refreshModels")}
+                      title={t("openaiGateway.refreshModels")}
                     />
                   </Space>
                 }
@@ -267,7 +294,7 @@ export default function OpenAIGatewayPage() {
                   <Alert
                     type="error"
                     showIcon
-                    message="Failed to load models"
+                    message={t("openaiGateway.failedToLoadModels")}
                     description={
                       models.error instanceof Error ? models.error.message : "Unknown error"
                     }
@@ -306,7 +333,7 @@ export default function OpenAIGatewayPage() {
                 title={
                   <Space>
                     <CodeOutlined />
-                    Client Setup
+                    {t("openaiGateway.clientSetup")}
                   </Space>
                 }
                 style={{ height: "100%" }}
@@ -319,23 +346,23 @@ export default function OpenAIGatewayPage() {
                     <Tag color="cyan">tools</Tag>
                   </Flex>
                   <div>
-                    <Text strong>Compatible Clients</Text>
+                    <Text strong>{t("openaiGateway.compatibleClients")}</Text>
                     <Paragraph
                       type="secondary"
                       style={{ marginBottom: 0, fontSize: token.fontSizeSM }}
                     >
-                      Use the base URL above and paste the API key as the bearer token in Cursor or
-                      any OpenAI-compatible client.
+                      {t("openaiGateway.compatibleClientsDescription")}
                     </Paragraph>
                   </div>
                   <div>
-                    <Text strong>Model Selection</Text>
+                    <Text strong>{t("openaiGateway.modelSelection")}</Text>
                     <Paragraph
                       type="secondary"
                       style={{ marginBottom: 0, fontSize: token.fontSizeSM }}
                     >
-                      Pick any model from the explorer. Short IDs like{" "}
-                      <Text code>{data.exampleModel}</Text> are supported.
+                      {t("openaiGateway.modelSelectionDescriptionBefore")} {""}
+                      <Text code>{data.exampleModel}</Text>{" "}
+                      {t("openaiGateway.modelSelectionDescriptionAfter")}
                     </Paragraph>
                   </div>
                 </Flex>
@@ -347,7 +374,7 @@ export default function OpenAIGatewayPage() {
                 title={
                   <Space>
                     <ThunderboltOutlined />
-                    Integration Examples
+                    {t("openaiGateway.integrationExamples")}
                   </Space>
                 }
                 style={{ height: "100%" }}

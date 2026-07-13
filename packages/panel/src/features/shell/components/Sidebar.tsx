@@ -5,6 +5,7 @@ import { useState } from "react";
 const { Text } = Typography;
 
 import { useLocation, useNavigate } from "react-router-dom";
+import { useLocale } from "../../../shared/i18n/index.js";
 import { openExternal } from "../../../shared/openExternal.js";
 import { useLiveIndicator } from "../../live-session/hooks/useLiveIndicator.js";
 import { buildNavItems, selectedKeyFromPath } from "./navItems.js";
@@ -19,9 +20,10 @@ export function Sidebar() {
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
 
+  const { t } = useLocale();
   const isLive = useLiveIndicator();
   const selectedKey = selectedKeyFromPath(location.pathname);
-  const navItems = buildNavItems(isLive);
+  const navItems = buildNavItems(t, isLive);
 
   return (
     <Sider
@@ -73,6 +75,7 @@ export function Sidebar() {
 
 function GitHubButton({ collapsed }: { collapsed: boolean }) {
   const { token } = theme.useToken();
+  const { t } = useLocale();
 
   const link = (
     <a
@@ -120,7 +123,7 @@ function GitHubButton({ collapsed }: { collapsed: boolean }) {
       >
         <GithubOutlined />
       </div>
-      {!collapsed && <span>Star us on GitHub</span>}
+      {!collapsed && <span>{t("nav.starOnGitHub")}</span>}
     </a>
   );
 
@@ -136,7 +139,7 @@ function GitHubButton({ collapsed }: { collapsed: boolean }) {
       }}
     >
       {collapsed ? (
-        <Tooltip title="Star us on GitHub" placement="right">
+        <Tooltip title={t("nav.starOnGitHub")} placement="right">
           {link}
         </Tooltip>
       ) : (

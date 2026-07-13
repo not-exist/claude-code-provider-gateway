@@ -16,6 +16,7 @@ import {
   Typography,
   theme,
 } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import type { ChainRoutingStrategy } from "../../../../../../daemon/src/config/schema.js";
 import type { RoutingOption } from "../../domain/types.js";
 import { normalizeSlug } from "../../domain/utils.js";
@@ -36,14 +37,13 @@ interface ChainModalProps {
 }
 
 const ATTEMPTS_HINT: Record<ChainRoutingStrategy, string> = {
-  waterfall: "Number of times the primary model is tried before falling through to the next.",
-  round_robin:
-    "Number of times the initially selected model is tried; later fallback picks get one attempt each.",
+  waterfall: "modelChain.waterfallAttemptsHint",
+  round_robin: "modelChain.roundRobinAttemptsHint",
 };
 
 const CHAIN_ORDER_HINT: Record<ChainRoutingStrategy, string> = {
-  waterfall: "Drag to reorder · tried top-to-bottom, falls through on failure",
-  round_robin: "Order doesn't matter · fallbacks get 1 attempt each",
+  waterfall: "modelChain.waterfallOrderHint",
+  round_robin: "modelChain.roundRobinOrderHint",
 };
 
 const DEFAULT_REQUEST_TIMEOUT_SECONDS = 60;
@@ -70,6 +70,7 @@ export function ChainModal({
   onCancel,
   onSave,
 }: ChainModalProps) {
+  const { t } = useLocale();
   const { token } = theme.useToken();
 
   const canSave =
@@ -87,12 +88,12 @@ export function ChainModal({
     <Modal
       centered
       open={open}
-      title={draft?.id.startsWith("chain_") ? "Create Model Chain" : "Edit Model Chain"}
+      title={draft?.id.startsWith("chain_") ? t("modelChain.createChain") : t("modelChain.editChain")}
       width={720}
       onCancel={onCancel}
       footer={[
         <Button key="cancel" onClick={onCancel}>
-          Cancel
+          {t("common.cancel")}
         </Button>,
         <Button
           key="save"
@@ -100,7 +101,7 @@ export function ChainModal({
           disabled={!draft || !canSave}
           onClick={() => draft && onSave(draft)}
         >
-          Save chain
+          {t("modelChain.saveChain")}
         </Button>,
       ]}
     >
@@ -109,10 +110,10 @@ export function ChainModal({
           <Form layout="vertical">
             <Row gutter={token.paddingMD}>
               <Col flex="1">
-                <Form.Item label="Name" required style={{ marginBottom: 0 }}>
+                <Form.Item label={t("modelChain.chainName")} required style={{ marginBottom: 0 }}>
                   <Input
                     value={draft.name}
-                    placeholder="Premium Rescue"
+                    placeholder={t("modelChain.chainNamePlaceholder")}
                     onChange={(event) => {
                       const name = event.target.value;
                       update({
@@ -125,7 +126,7 @@ export function ChainModal({
               </Col>
               <Col flex="1">
                 <Form.Item
-                  label="Slug"
+                  label={t("modelChain.chainSlug")}
                   required
                   style={{ marginBottom: 0 }}
                   validateStatus={
@@ -136,7 +137,7 @@ export function ChainModal({
                       ? "Slug already exists"
                       : undefined
                   }
-                  tooltip="Letters, numbers, dash, underscore"
+                  tooltip={t("modelChain.slugTooltip")}
                 >
                   <Input
                     prefix="--"
@@ -147,7 +148,7 @@ export function ChainModal({
                 </Form.Item>
               </Col>
               <Col flex="none">
-                <Form.Item label="Enabled" style={{ marginBottom: 0 }}>
+                <Form.Item label={t("modelChain.enabled")} style={{ marginBottom: 0 }}>
                   <Switch checked={draft.enabled} onChange={(enabled) => update({ enabled })} />
                 </Form.Item>
               </Col>
@@ -157,7 +158,7 @@ export function ChainModal({
           <Form layout="vertical">
             <Row gutter={token.paddingMD} align="top">
               <Col span={14}>
-                <Form.Item label="Routing strategy" style={{ marginBottom: 0 }}>
+                <Form.Item label={t("modelChain.routingStrategy")} style={{ marginBottom: 0 }}>
                   <Segmented
                     block
                     value={draft.routingStrategy}
@@ -166,7 +167,7 @@ export function ChainModal({
                       {
                         label: (
                           <Space>
-                            <BranchesOutlined /> Waterfall
+                            <BranchesOutlined /> {t("modelChain.waterfall")}
                           </Space>
                         ),
                         value: "waterfall",
@@ -174,7 +175,7 @@ export function ChainModal({
                       {
                         label: (
                           <Space>
-                            <SyncOutlined /> Round Robin
+                            <SyncOutlined /> {t("modelChain.roundRobin")}
                           </Space>
                         ),
                         value: "round_robin",
@@ -182,16 +183,18 @@ export function ChainModal({
                     ]}
                   />
                   <Text type="secondary" style={{ fontSize: 12, display: "block", marginTop: 4 }}>
-                    {draft.routingStrategy === "waterfall"
-                      ? "Starts with primary model. Falls through on failure."
-                      : "Picks at random on each request, distributing load."}
+                    {t(
+                      draft.routingStrategy === "waterfall"
+                        ? "modelChain.waterfallDescription"
+                        : "modelChain.roundRobinDescription",
+                    )}
                   </Text>
                 </Form.Item>
               </Col>
               <Col span={10}>
                 <Form.Item
-                  label="Primary attempts"
-                  tooltip={ATTEMPTS_HINT[draft.routingStrategy]}
+                  label={t("modelChain.primaryAttempts")}
+                  tooltip={t(ATTEMPTS_HINT[draft.routingStrategy])}
                   style={{ marginBottom: 0 }}
                 >
                   <InputNumber
@@ -215,9 +218,9 @@ export function ChainModal({
                 key: "advanced",
                 label: (
                   <Flex vertical gap={0}>
-                    <Text strong>Advanced settings</Text>
+                    <Text strong>{t("modelChain.advancedSettings")}</Text>
                     <Text type="secondary" style={{ fontSize: 12 }}>
-                      Fallback timing for this chain. Leave empty to use the resilient defaults.
+                      {t("modelChain.advancedSettingsDescription")}
                     </Text>
                   </Flex>
                 ),
@@ -226,8 +229,10 @@ export function ChainModal({
                     <Row gutter={token.paddingSM}>
                       <Col xs={24} md={8}>
                         <Form.Item
-                          label="Request timeout"
-                          tooltip={`Default ${DEFAULT_REQUEST_TIMEOUT_SECONDS}s. Time allowed for a provider to return response headers before this chain tries the next model.`}
+                          label={t("modelChain.requestTimeout")}
+                          tooltip={t("modelChain.requestTimeoutTooltip", {
+                            seconds: String(DEFAULT_REQUEST_TIMEOUT_SECONDS),
+                          })}
                           style={{ marginBottom: 0 }}
                         >
                           <InputNumber
@@ -244,8 +249,10 @@ export function ChainModal({
                       </Col>
                       <Col xs={24} md={8}>
                         <Form.Item
-                          label="First token timeout"
-                          tooltip={`Default ${DEFAULT_FIRST_TOKEN_TIMEOUT_SECONDS}s. Time allowed for useful Anthropic content before any answer is shown; if it expires, the next model is tried.`}
+                          label={t("modelChain.firstTokenTimeout")}
+                          tooltip={t("modelChain.firstTokenTimeoutTooltip", {
+                            seconds: String(DEFAULT_FIRST_TOKEN_TIMEOUT_SECONDS),
+                          })}
                           style={{ marginBottom: 0 }}
                         >
                           <InputNumber
@@ -262,8 +269,10 @@ export function ChainModal({
                       </Col>
                       <Col xs={24} md={8}>
                         <Form.Item
-                          label="Total stream timeout"
-                          tooltip={`Default ${DEFAULT_TOTAL_STREAM_TIMEOUT_SECONDS}s. Maximum time for one chain attempt; increase for large contexts or slow local models.`}
+                          label={t("modelChain.totalStreamTimeout")}
+                          tooltip={t("modelChain.totalStreamTimeoutTooltip", {
+                            seconds: String(DEFAULT_TOTAL_STREAM_TIMEOUT_SECONDS),
+                          })}
                           style={{ marginBottom: 0 }}
                         >
                           <InputNumber
@@ -290,14 +299,14 @@ export function ChainModal({
             title={
               <Space>
                 <ThunderboltOutlined />
-                Chain order
+                {t("modelChain.chainOrder")}
               </Space>
             }
             extra={
               <Text type="secondary" style={{ fontSize: 12 }}>
                 {draft.models.length < 2
-                  ? "Add at least 2 models"
-                  : CHAIN_ORDER_HINT[draft.routingStrategy]}
+                  ? t("modelChain.addAtLeastTwo")
+                  : t(CHAIN_ORDER_HINT[draft.routingStrategy])}
               </Text>
             }
             styles={{ body: { padding: token.paddingSM, maxHeight: 240, overflowY: "auto" } }}
