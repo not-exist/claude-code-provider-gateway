@@ -69,7 +69,11 @@ export function registerConfigRoutes(app: Hono, runtime: PanelRuntime): void {
       if (modelFallbackError) return c.json({ error: modelFallbackError }, 409);
       merged.modelFallbacks = update.modelFallbacks;
     }
-    merged.panelSettings ??= { favoriteProviders: [], favoritesTipDismissed: false };
+    merged.panelSettings ??= {
+      favoriteProviders: [],
+      favoritesTipDismissed: false,
+      locale: "en",
+    };
     if (update.panelSettings) {
       Object.assign(merged.panelSettings, update.panelSettings);
     }

@@ -99,6 +99,7 @@ export function normalizeConfig(config: Config, defaults: Config): Config {
         config.panelSettings?.favoritesTipDismissed,
         defaults.panelSettings.favoritesTipDismissed,
       ),
+      locale: config.panelSettings?.locale === "zh-CN" ? "zh-CN" : defaults.panelSettings.locale,
     },
   };
 }
