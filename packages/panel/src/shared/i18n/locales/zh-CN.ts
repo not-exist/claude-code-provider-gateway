@@ -17,10 +17,9 @@ const zhCN = {
   "topbar.stop": "停止",
   "topbar.start": "启动",
   "topbar.cancel": "取消",
-  "topbar.running": "运行中",
-  "topbar.stopped": "已停止",
-  "topbar.starting": "启动中…",
-  "topbar.stopping": "停止中…",
+  "topbar.running": "网关运行中",
+  "topbar.offline": "网关已停止",
+  "topbar.unknown": "检查中…",
   "topbar.devOnlyTooltip": "开发模式下请使用 `bun dev:desk` 重启",
 
   // ── 通用 / 共享 ──

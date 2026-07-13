@@ -1,10 +1,10 @@
+import type { ReactNode } from "react";
 import {
   createContext,
   useCallback,
   useContext,
   useEffect,
   useState,
-  type ReactNode,
 } from "react";
 import { http } from "../api/http.js";
 import en from "./locales/en.js";
@@ -21,7 +21,7 @@ interface LocaleContextValue {
 
 const LocaleContext = createContext<LocaleContextValue | null>(null);
 
-export function LocaleProvider({ children }: { children: ReactNode }) {
+export function LocaleProvider({ children }: { children: ReactNode }): ReactNode {
   const [locale, setLocaleState] = useState<Locale>("en");
   const [ready, setReady] = useState(false);
 

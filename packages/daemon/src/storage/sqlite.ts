@@ -1,17 +1,41 @@
 import { mkdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname } from "node:path";
-import type { DatabaseSync as DatabaseSyncInstance } from "node:sqlite";
 import type { SessionRecord } from "../runtime/sessions/types.js";
 
-const require = createRequire(import.meta.url);
-const { DatabaseSync } = require("node:sqlite") as typeof import("node:sqlite");
+const nodeRequire = createRequire(import.meta.url);
 
 const DEFAULT_SQLITE_PATH = "/data/ccpg.sqlite";
 const CONFIG_KEY = "config";
 const MAX_ARCHIVED_SESSIONS = 200;
 
-let database: DatabaseSyncInstance | null = null;
+interface DbStatement {
+  get(...params: unknown[]): unknown;
+  all(...params: unknown[]): unknown[];
+  run(...params: unknown[]): { changes: number };
+}
+
+interface DbHandle {
+  prepare(sql: string): DbStatement;
+  exec(sql: string): void;
+  close(): void;
+}
+
+let database: DbHandle | null = null;
+
+function openSqlite(path: string): DbHandle {
+  if (typeof Bun !== "undefined") {
+    const { Database } = nodeRequire("bun:sqlite") as typeof import("bun:sqlite");
+    const db = new Database(path);
+    return {
+      prepare: (sql: string) => db.query(sql) as unknown as DbStatement,
+      exec: (sql: string) => { db.exec(sql); },
+      close: () => { db.close(); },
+    };
+  }
+  const { DatabaseSync } = nodeRequire("node:sqlite") as typeof import("node:sqlite");
+  return new DatabaseSync(path) as unknown as DbHandle;
+}
 
 export function isSqliteStorageEnabled(): boolean {
   return process.env.CCPG_STORAGE_BACKEND === "sqlite" || !!process.env.CCPG_SQLITE_PATH;
@@ -21,11 +45,11 @@ export function getSqlitePath(): string {
   return process.env.CCPG_SQLITE_PATH || DEFAULT_SQLITE_PATH;
 }
 
-export function getSqliteDatabase(): DatabaseSyncInstance {
+export function getSqliteDatabase(): DbHandle {
   if (database) return database;
   const path = getSqlitePath();
   mkdirSync(dirname(path), { recursive: true });
-  database = new DatabaseSync(path);
+  database = openSqlite(path);
   migrate(database);
   return database;
 }
@@ -147,7 +171,7 @@ export function listArchivedSessionsFromSqlite(): SessionRecord[] {
     .map((row) => JSON.parse((row as { data: string }).data) as SessionRecord);
 }
 
-function migrate(db: DatabaseSyncInstance): void {
+function migrate(db: DbHandle): void {
   db.exec(`
     PRAGMA journal_mode = WAL;
     PRAGMA foreign_keys = ON;
@@ -179,7 +203,7 @@ function migrate(db: DatabaseSyncInstance): void {
   `);
 }
 
-function trimArchivedSessions(db: DatabaseSyncInstance): void {
+function trimArchivedSessions(db: DbHandle): void {
   db.prepare(
     "DELETE FROM archived_sessions WHERE id NOT IN (" +
       "SELECT id FROM archived_sessions ORDER BY ended_at DESC, started_at DESC LIMIT ?" +
