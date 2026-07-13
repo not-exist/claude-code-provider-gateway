@@ -1,4 +1,5 @@
 import { Divider, Flex, Segmented, Switch, Typography, theme } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import type { TokenSaversConfig } from "../../domain/types.js";
 
 const { Text } = Typography;
@@ -10,11 +11,13 @@ interface TokenSaversCardProps {
 
 export function TokenSaversCard({ value, onChange }: TokenSaversCardProps) {
   const { token } = theme.useToken();
+  const { t } = useLocale();
+
   return (
     <Flex vertical gap={token.padding}>
       <ToggleRow
-        title="RTK compression"
-        description="Compact large tool results before provider dispatch"
+        title={t("settings.tokenSavers.rtkTitle")}
+        description={t("settings.tokenSavers.rtkDesc")}
         checked={value.rtkEnabled}
         onChange={(v) => onChange({ rtkEnabled: v })}
       />
@@ -22,18 +25,18 @@ export function TokenSaversCard({ value, onChange }: TokenSaversCardProps) {
       <Divider style={{ margin: 0, borderColor: token.colorBorderSecondary }} />
 
       <ToggleRow
-        title="Caveman mode"
-        description="Inject terse-response guidance into the system prompt"
+        title={t("settings.tokenSavers.cavemanTitle")}
+        description={t("settings.tokenSavers.cavemanDesc")}
         checked={value.cavemanEnabled}
         onChange={(v) => onChange({ cavemanEnabled: v })}
       />
 
       <Flex vertical gap={token.paddingXS}>
         <Text strong style={{ opacity: value.cavemanEnabled ? 1 : 0.4 }}>
-          Caveman level
+          {t("settings.tokenSavers.cavemanLevel")}
         </Text>
         <Segmented
-          aria-label="Caveman mode level"
+          aria-label={t("settings.tokenSavers.cavemanLevel")}
           disabled={!value.cavemanEnabled}
           value={value.cavemanLevel}
           options={[

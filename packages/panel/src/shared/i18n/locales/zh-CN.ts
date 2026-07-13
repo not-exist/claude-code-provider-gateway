@@ -290,6 +290,10 @@ const zhCN = {
   "logs.downloadLog": "下载完整日志缓冲区为 .log 文件",
   "logs.scrollToBottom": "滚动到底部",
   "logs.noLogs": "暂无日志条目",
+  "logs.noLogsDownloaded": "没有日志被下载",
+  "logs.logsSavedTo": "日志已保存至 {path}",
+  "logs.downloaded": "已下载 {fileName}",
+  "logs.failedToSave": "保存日志失败",
 
   // ── 设置 ──
   "settings.title": "设置",
@@ -331,6 +335,10 @@ const zhCN = {
 
   // ── 实时会话 ──
   "liveSession.title": "实时会话",
+  "liveSession.running": "运行中",
+  "liveSession.idle": "空闲",
+  "liveSession.autoRefresh": "自动刷新每隔",
+  "liveSession.startTerminals": "启动一个或多个 ccpg 终端即可在此查看实时会话。",
   "liveSession.noActiveSessions": "暂无活跃会话",
   "liveSession.providers": "提供商",
   "liveSession.models": "模型",

@@ -28,6 +28,7 @@ import {
   theme,
 } from "antd";
 import { useState } from "react";
+import { useLocale } from "../../../shared/i18n/index.js";
 import { LoadingState } from "../../../shared/components/LoadingState.js";
 import { PageHeader } from "../../../shared/components/PageHeader.js";
 import { useCopyToClipboard } from "../../../shared/hooks/useCopyToClipboard.js";
@@ -39,6 +40,7 @@ type OpenAIGatewayModel = OpenAIGatewayModels["models"][number];
 
 export default function OpenAIGatewayPage() {
   const { token } = theme.useToken();
+  const { t } = useLocale();
   const { data, status, cursorFields, reload, models } = useOpenAIGateway();
   const { copiedKey, copy } = useCopyToClipboard();
   const [modelQuery, setModelQuery] = useState("");
@@ -145,15 +147,15 @@ export default function OpenAIGatewayPage() {
     <Flex vertical gap={token.paddingLG}>
       <Flex justify="space-between" align="flex-start" wrap="wrap" gap={token.padding}>
         <PageHeader
-          title="OpenAI Gateway"
-          description="Expose this local daemon as an OpenAI-compatible endpoint."
+          title={t("openaiGateway.title")}
+          description={t("openaiGateway.description")}
         />
         {models.status === "success" && (
           <Badge count={modelList.length} color="blue" showZero overflowCount={999}>
             <Card size="small" styles={{ body: { padding: "8px 16px" } }}>
               <Space>
                 <ApiOutlined style={{ color: token.colorPrimary }} />
-                <Text strong>Active Models</Text>
+                <Text strong>{t("openaiGateway.availableModels")}</Text>
               </Space>
             </Card>
           </Badge>

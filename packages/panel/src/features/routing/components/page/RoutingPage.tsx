@@ -1,4 +1,5 @@
 import { Alert, Col, Flex, Row, theme } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import { PageHeader } from "../../../../shared/components/PageHeader.js";
 import { SaveButton } from "../../../../shared/components/SaveButton.js";
 import { TIERS } from "../../domain/constants.js";
@@ -9,6 +10,7 @@ import { RoutingGridSkeleton } from "../tier/TierCardSkeleton.js";
 
 export default function RoutingPage() {
   const { token } = theme.useToken();
+  const { t } = useLocale();
   const { rules, thinking, setThinking, options, updateRule, loaded, saving, saved, save } =
     useRouting();
 
@@ -21,8 +23,8 @@ export default function RoutingPage() {
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100%" }}>
       <Flex vertical gap={token.paddingLG} style={{ flex: 1, paddingBottom: token.paddingLG * 2 }}>
         <PageHeader
-          title="Routing"
-          description="Override which provider and model handles each Claude tier. When disabled, requests pass through unchanged."
+          title={t("routing.title")}
+          description={t("routing.description")}
         />
 
         {!loaded ? (
@@ -33,8 +35,8 @@ export default function RoutingPage() {
               <Alert
                 type="warning"
                 showIcon
-                message="No providers enabled"
-                description="Enable and configure a provider on the Providers page before setting up routing."
+                message={t("routing.noProvidersEnabled")}
+                description={t("routing.noProvidersEnabledDesc")}
               />
             )}
 
@@ -73,7 +75,7 @@ export default function RoutingPage() {
           }}
         >
           <ThinkingToggle checked={thinking} onChange={setThinking} />
-          <SaveButton onClick={handleSave} saving={saving} saved={saved} label="Save routing" />
+          <SaveButton onClick={handleSave} saving={saving} saved={saved} label={t("common.saveRouting")} />
         </div>
       )}
     </div>
