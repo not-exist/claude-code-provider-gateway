@@ -1,4 +1,5 @@
 import { Divider, Flex, Switch, Typography, theme } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import type { WebToolsConfig } from "../../domain/types.js";
 
 const { Text } = Typography;
@@ -10,11 +11,13 @@ interface WebToolsCardProps {
 
 export function WebToolsCard({ value, onChange }: WebToolsCardProps) {
   const { token } = theme.useToken();
+  const { t } = useLocale();
+
   return (
     <Flex vertical gap={token.padding}>
       <ToggleRow
-        title="Enable web_search / web_fetch"
-        description="Allows Claude to search the web and fetch URLs"
+        title={t("settings.webTools.enableSearch")}
+        description={t("settings.webTools.enableSearchDesc")}
         checked={value.enabled}
         onChange={(v) => onChange({ enabled: v })}
       />
@@ -22,8 +25,8 @@ export function WebToolsCard({ value, onChange }: WebToolsCardProps) {
       <Divider style={{ margin: 0, borderColor: token.colorBorderSecondary }} />
 
       <ToggleRow
-        title="Allow private networks"
-        description="Permit fetching RFC1918 addresses (192.168.x, 10.x…)"
+        title={t("settings.webTools.allowPrivate")}
+        description={t("settings.webTools.allowPrivateDesc")}
         checked={value.allowPrivateNetworks}
         disabled={!value.enabled}
         onChange={(v) => onChange({ allowPrivateNetworks: v })}

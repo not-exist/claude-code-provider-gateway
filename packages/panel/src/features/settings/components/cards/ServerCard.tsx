@@ -1,5 +1,6 @@
 import { Alert, Form, type FormInstance, InputNumber } from "antd";
 import type { CSSProperties } from "react";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import type { ServerConfig } from "../../domain/types.js";
 
 interface ServerCardProps {
@@ -13,16 +14,18 @@ const MONO_INPUT: CSSProperties = {
 };
 
 export function ServerCard({ form, containerRuntime = false }: ServerCardProps) {
+  const { t } = useLocale();
+
   if (containerRuntime) {
     return (
       <Form form={form} layout="vertical" requiredMark={false} style={{ margin: 0 }}>
-        <Form.Item name="proxyPort" label="Proxy Port" style={{ marginBottom: 12 }}>
+        <Form.Item name="proxyPort" label={t("settings.server.proxyPort")} style={{ marginBottom: 12 }}>
           <InputNumber style={MONO_INPUT} disabled />
         </Form.Item>
         <Alert
           type="info"
           showIcon
-          message="Docker publishes this port from docker-compose.yml. Port changes require recreating the container."
+          message={t("settings.server.dockerNotice")}
         />
       </Form>
     );
@@ -32,7 +35,7 @@ export function ServerCard({ form, containerRuntime = false }: ServerCardProps) 
     <Form form={form} layout="vertical" requiredMark={false} style={{ margin: 0 }}>
       <Form.Item
         name="proxyPort"
-        label="Proxy Port"
+        label={t("settings.server.proxyPort")}
         help="Claude Code points here via ANTHROPIC_BASE_URL"
         style={{ marginBottom: 0 }}
       >

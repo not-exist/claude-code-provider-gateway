@@ -1,5 +1,6 @@
 import { App, Badge, Card, Flex, Typography, theme } from "antd";
 import { useCallback } from "react";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import { PageHeader } from "../../../../shared/components/PageHeader.js";
 import { useServerLogs } from "../../hooks/useServerLogs.js";
 import { LogsSummary } from "../summary/LogsSummary.js";
@@ -11,6 +12,7 @@ const { Text } = Typography;
 export default function ServerLogsPage() {
   const { message } = App.useApp();
   const { token } = theme.useToken();
+  const { t } = useLocale();
   const {
     logs,
     filteredLogs,
@@ -35,16 +37,16 @@ export default function ServerLogsPage() {
     try {
       const result = await downloadLogs();
       if (!result) {
-        message.info("No logs were downloaded");
+        message.info(t("logs.noLogsDownloaded"));
         return;
       }
       if (result.target === "desktop") {
-        message.success(`Logs saved to ${result.path}`);
+        message.success(t("logs.logsSavedTo", { path: result.path }));
       } else {
-        message.success(`Downloaded ${result.fileName}`);
+        message.success(t("logs.downloaded", { fileName: result.fileName }));
       }
     } catch (err) {
-      message.error(err instanceof Error ? err.message : "Failed to save logs");
+      message.error(err instanceof Error ? err.message : t("logs.failedToSave"));
     }
   }, [downloadLogs, message]);
 
@@ -52,8 +54,8 @@ export default function ServerLogsPage() {
     <Flex vertical gap={token.paddingLG} style={{ height: pageHeight }}>
       <Flex justify="space-between" align="center">
         <PageHeader
-          title="Server Logs"
-          description="Real-time gateway log stream — up to 5,000 lines buffered"
+          title={t("logs.title")}
+          description={t("logs.description")}
         />
         <Badge
           status={paused ? "warning" : "processing"}

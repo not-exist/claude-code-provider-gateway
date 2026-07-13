@@ -298,6 +298,10 @@ const en = {
   "logs.downloadLog": "Download full log buffer as .log file",
   "logs.scrollToBottom": "Scroll to bottom",
   "logs.noLogs": "No log entries yet",
+  "logs.noLogsDownloaded": "No logs were downloaded",
+  "logs.logsSavedTo": "Logs saved to {path}",
+  "logs.downloaded": "Downloaded {fileName}",
+  "logs.failedToSave": "Failed to save logs",
 
   // ── Settings ──
   "settings.title": "Settings",
@@ -343,6 +347,10 @@ const en = {
 
   // ── Live Sessions ──
   "liveSession.title": "Live Sessions",
+  "liveSession.running": "RUNNING",
+  "liveSession.idle": "IDLE",
+  "liveSession.autoRefresh": "Auto-refresh every",
+  "liveSession.startTerminals": "Start one or more ccpg terminals to see live sessions here.",
   "liveSession.noActiveSessions": "No active sessions",
   "liveSession.providers": "Providers",
   "liveSession.models": "Models",
