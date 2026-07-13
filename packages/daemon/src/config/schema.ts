@@ -173,6 +173,7 @@ export interface Config {
   panelSettings: {
     favoriteProviders: ProviderId[];
     favoritesTipDismissed: boolean;
+    locale: "en" | "zh-CN";
   };
 }
 
