@@ -1,5 +1,6 @@
 import { ExportOutlined } from "@ant-design/icons";
 import { Button, Modal, Switch } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import { openExternal } from "../../../../shared/openExternal.js";
 import { getApiKeyLink } from "../../domain/apiKeyLinks.js";
 import { canTestProvider } from "../../domain/status.js";
@@ -35,6 +36,8 @@ export function ProviderConfigModal({
   handlers,
   onToggleEnabled,
 }: ProviderConfigModalProps) {
+  const { t } = useLocale();
+
   if (!p) return null;
 
   return (
@@ -46,7 +49,7 @@ export function ProviderConfigModal({
       footer={[
         p.custom && (
           <Button key="delete" danger onClick={() => handlers.onRequestDeleteProvider(p.id)}>
-            Delete Provider
+            {t("common.delete")}
           </Button>
         ),
         <Button
@@ -55,10 +58,10 @@ export function ProviderConfigModal({
           disabled={!canTestProvider(p)}
           onClick={() => handlers.onTest(p.id)}
         >
-          Test Connection
+          {t("providerConfig.testConnection")}
         </Button>,
         <Button key="close" type="primary" onClick={onClose}>
-          Done
+          {t("common.close")}
         </Button>,
       ]}
       width={600}
@@ -100,7 +103,9 @@ function ProviderConfigTitle({
           logoUrl={provider.logoUrl}
           size={28}
         />
-        <span style={{ fontSize: 18 }}>{provider.label} Configuration</span>
+        <span style={{ fontSize: 18 }}>
+          {provider.label} Configuration
+        </span>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         {apiKeyUrl && (

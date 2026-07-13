@@ -1,5 +1,6 @@
 import type { TableColumnsType } from "antd";
 import { Tag, Tooltip, Typography, theme } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import { ProviderLogo } from "../../../providers/components/grid/ProviderLogo.js";
 import { formatNumber } from "../../domain/format.js";
 import { providerLabel } from "../../domain/labels.js";
@@ -10,6 +11,7 @@ const { Text } = Typography;
 export type ModelStatsRow = [string, ModelStat];
 
 export function useModelStatsColumns(): TableColumnsType<ModelStatsRow> {
+  const { t } = useLocale();
   const { token } = theme.useToken();
 
   return [
@@ -36,7 +38,7 @@ export function useModelStatsColumns(): TableColumnsType<ModelStatsRow> {
       render: ([, stat]) => <LastProviderModel stat={stat} />,
     },
     {
-      title: "Requests",
+      title: t("history.requests"),
       key: "req",
       width: 85,
       align: "right",

@@ -20,6 +20,10 @@ const zhCN = {
   "topbar.running": "网关运行中",
   "topbar.offline": "网关已停止",
   "topbar.unknown": "检查中…",
+  "topbar.stopSignalSent": "已发送停止信号",
+  "topbar.failedToStop": "停止网关失败",
+  "topbar.gatewayStarted": "网关已启动",
+  "topbar.failedToStart": "启动网关失败",
   "topbar.devOnlyTooltip": "开发模式下请使用 `bun dev:desk` 重启",
 
   // ── 通用 / 共享 ──

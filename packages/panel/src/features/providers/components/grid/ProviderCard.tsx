@@ -1,5 +1,6 @@
 import { StarFilled, StarOutlined } from "@ant-design/icons";
 import { Badge, Button, Card, Space, Switch, Tag, Typography, theme } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import { COMING_SOON_PROVIDERS } from "../../domain/constants.js";
 import { isProviderReady } from "../../domain/status.js";
 import type { ProviderInfo, TestResult } from "../../domain/types.js";
@@ -31,8 +32,9 @@ export function ProviderCard({
   onToggleFavorite,
 }: ProviderCardProps) {
   const { token } = theme.useToken();
+  const { t } = useLocale();
   const comingSoon = COMING_SOON_PROVIDERS.has(p.id);
-  const status = getProviderStatus(p, comingSoon);
+  const status = getProviderStatus(p, comingSoon, t);
   const interactive = !comingSoon;
 
   return (
@@ -101,7 +103,7 @@ export function ProviderCard({
                   color={testResult.ok ? "success" : "error"}
                   style={{ margin: 0, fontSize: 11 }}
                 >
-                  {testResult.ok ? `${testResult.latencyMs}ms` : "Error"}
+                  {testResult.ok ? `${testResult.latencyMs}ms` : t("common.error")}
                 </Tag>
               )}
             </Space>
@@ -141,7 +143,11 @@ export function ProviderCard({
   );
 }
 
-function getProviderStatus(provider: ProviderInfo, comingSoon: boolean): ProviderStatus {
+function getProviderStatus(
+  provider: ProviderInfo,
+  comingSoon: boolean,
+  t: (key: string, replacements?: Record<string, string>) => string,
+): ProviderStatus {
   const ready = isProviderReady(provider);
 
   if (comingSoon) {
@@ -149,10 +155,10 @@ function getProviderStatus(provider: ProviderInfo, comingSoon: boolean): Provide
   }
 
   if (!provider.enabled) {
-    return { badge: "default", label: "Disabled", ready };
+    return { badge: "default", label: t("status.disabled"), ready };
   }
 
   return ready
-    ? { badge: "success", label: "Ready", ready }
-    : { badge: "warning", label: "Needs Config", ready };
+    ? { badge: "success", label: t("status.configured"), ready }
+    : { badge: "warning", label: t("status.notConfigured"), ready };
 }

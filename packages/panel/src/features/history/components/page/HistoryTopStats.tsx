@@ -1,6 +1,7 @@
 import { FireOutlined, TrophyOutlined } from "@ant-design/icons";
 import { Card, Col, Flex, Row, Tag, Typography, theme } from "antd";
 import type { ReactNode } from "react";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import { ProviderLogo } from "../../../providers/components/grid/ProviderLogo.js";
 
 const { Text } = Typography;
@@ -17,6 +18,7 @@ interface HistoryTopStatsProps {
 }
 
 export function HistoryTopStats({ topProvider, topModel }: HistoryTopStatsProps) {
+  const { t } = useLocale();
   const { token } = theme.useToken();
 
   if (!topProvider && !topModel) return null;
@@ -25,7 +27,7 @@ export function HistoryTopStats({ topProvider, topModel }: HistoryTopStatsProps)
     <Row gutter={[token.paddingLG, token.paddingLG]}>
       <Col xs={24} md={12}>
         <TopStatCard
-          title="Top Provider"
+          title={t("history.topProvider")}
           icon={<TrophyOutlined />}
           color={token.colorPrimary}
           tagColor="blue"
@@ -35,7 +37,7 @@ export function HistoryTopStats({ topProvider, topModel }: HistoryTopStatsProps)
       </Col>
       <Col xs={24} md={12}>
         <TopStatCard
-          title="Most Used Model"
+          title={t("history.mostUsedModel")}
           icon={<FireOutlined />}
           color={token.colorWarning}
           tagColor="warning"

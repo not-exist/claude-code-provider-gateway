@@ -1,6 +1,7 @@
 import { ThunderboltOutlined } from "@ant-design/icons";
 import { Card, Col, Empty, Flex, Row, Skeleton, Tag, Typography, theme } from "antd";
 import { Link as RouterLink } from "react-router-dom";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import type { StatsResponse } from "../../domain/types.js";
 import { ProviderStatCard } from "./ProviderStatCard.js";
 
@@ -13,6 +14,7 @@ interface EnabledProvidersCardProps {
 
 export function EnabledProvidersCard({ stats, isLoading }: EnabledProvidersCardProps) {
   const { token } = theme.useToken();
+  const { t } = useLocale();
   const count = stats?.providers.length ?? 0;
 
   return (
@@ -48,21 +50,21 @@ export function EnabledProvidersCard({ stats, isLoading }: EnabledProvidersCardP
             <ThunderboltOutlined />
           </div>
           <Text strong style={{ fontSize: 16 }}>
-            Top Enabled Providers
+            {t("dashboard.enabledProviders")}
           </Text>
           {stats && (
             <Tag
               color={count > 0 ? "processing" : "default"}
               style={{ border: "none", marginLeft: token.paddingSM, fontWeight: 500 }}
             >
-              {count} ENABLED
+              {count} {t("status.enabled")}
             </Tag>
           )}
         </Flex>
       }
       extra={
         <Text type="secondary" style={{ fontSize: 13 }}>
-          From session history · <ThemedLink to="/history">History</ThemedLink>
+          {t("dashboard.fromSessionHistory")} · <ThemedLink to="/history">{t("dashboard.history")}</ThemedLink>
         </Text>
       }
     >
@@ -79,7 +81,7 @@ export function EnabledProvidersCard({ stats, isLoading }: EnabledProvidersCardP
           image={Empty.PRESENTED_IMAGE_SIMPLE}
           description={
             <Text type="secondary">
-              No enabled providers. <ThemedLink to="/providers">Configure providers</ThemedLink>
+              {t("dashboard.noEnabledProviders")} <ThemedLink to="/providers">{t("dashboard.configureProviders")}</ThemedLink>
             </Text>
           }
         />

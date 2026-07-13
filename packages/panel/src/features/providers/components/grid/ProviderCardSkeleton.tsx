@@ -1,4 +1,5 @@
 import { Card, Col, Flex, Row, Skeleton, Typography, theme } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 
 const { Title } = Typography;
 
@@ -47,12 +48,13 @@ function ProviderGroupSkeleton({ title, count }: { title: string; count: number 
 
 export function ProviderGridSkeleton() {
   const { token } = theme.useToken();
+  const { t } = useLocale();
 
   return (
     <Flex vertical gap={token.paddingLG}>
-      <ProviderGroupSkeleton title="Local Providers" count={3} />
-      <ProviderGroupSkeleton title="OAuth Providers" count={4} />
-      <ProviderGroupSkeleton title="API Key Providers" count={8} />
+      <ProviderGroupSkeleton title={t("providers.localProviders")} count={3} />
+      <ProviderGroupSkeleton title={t("providers.oauthProviders")} count={4} />
+      <ProviderGroupSkeleton title={t("providers.apiKeyProviders")} count={8} />
     </Flex>
   );
 }

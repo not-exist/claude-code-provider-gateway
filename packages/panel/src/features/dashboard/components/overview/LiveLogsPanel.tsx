@@ -1,6 +1,7 @@
 import { ClearOutlined, PauseCircleOutlined, PlayCircleOutlined } from "@ant-design/icons";
 import { Badge, Button, Card, Flex, Space, Typography, theme } from "antd";
 import { useEffect, useRef } from "react";
+import { useLocale } from "../../../../shared/i18n/index.js";
 
 const { Text } = Typography;
 
@@ -13,6 +14,7 @@ interface LiveLogsPanelProps {
 
 export function LiveLogsPanel({ logs, paused, onTogglePaused, onClear }: LiveLogsPanelProps) {
   const { token } = theme.useToken();
+  const { t } = useLocale();
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -26,7 +28,7 @@ export function LiveLogsPanel({ logs, paused, onTogglePaused, onClear }: LiveLog
       title={
         <Space>
           <Badge status={paused ? "warning" : "processing"} />
-          <span>Live Logs</span>
+          <span>{t("dashboard.liveLogs")}</span>
           <Text type="secondary" style={{ fontWeight: token.fontWeightStrong }}>
             {logs.length} lines
           </Text>

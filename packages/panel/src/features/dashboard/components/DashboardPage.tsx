@@ -1,4 +1,5 @@
 import { Flex, theme } from "antd";
+import { useLocale } from "../../../shared/i18n/index.js";
 import { PageHeader } from "../../../shared/components/PageHeader.js";
 import { useDashboardPage } from "../hooks/useDashboardPage.js";
 import { EnabledProvidersCard } from "./overview/EnabledProvidersCard.js";
@@ -8,6 +9,7 @@ import { ShellSetupCard } from "./shell-setup/ShellSetupCard.js";
 
 export default function DashboardPage() {
   const { token } = theme.useToken();
+  const { t } = useLocale();
   const page = useDashboardPage();
   const isContainerRuntime = page.shellSetup?.runtime.mode === "container";
 
@@ -26,7 +28,7 @@ export default function DashboardPage() {
 
   return (
     <Flex vertical gap={token.paddingLG}>
-      <PageHeader title="Dashboard" />
+      <PageHeader title={t("dashboard.title")} />
       <StatusOverview status={page.status} topModel={page.topModel} isLoading={page.isLoading} />
       <EnabledProvidersCard stats={page.stats} isLoading={page.isLoading} />
       <QuickLaunchCard items={page.launchItems} error={page.launchError} />

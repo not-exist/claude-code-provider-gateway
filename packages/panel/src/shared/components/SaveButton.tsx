@@ -1,5 +1,6 @@
 import { CheckOutlined, SaveOutlined } from "@ant-design/icons";
 import { Button } from "antd";
+import { useLocale } from "../i18n/index.js";
 
 interface SaveButtonProps {
   onClick: () => void;
@@ -13,9 +14,13 @@ export function SaveButton({
   onClick,
   saving,
   saved,
-  label = "Save",
-  savedLabel = "Saved",
+  label,
+  savedLabel,
 }: SaveButtonProps) {
+  const { t } = useLocale();
+  const resolvedLabel = label ?? t("common.save");
+  const resolvedSavedLabel = savedLabel ?? t("common.saved");
+
   return (
     <Button
       type="primary"
@@ -23,7 +28,7 @@ export function SaveButton({
       loading={saving}
       onClick={onClick}
     >
-      {saved ? savedLabel : label}
+      {saved ? resolvedSavedLabel : resolvedLabel}
     </Button>
   );
 }

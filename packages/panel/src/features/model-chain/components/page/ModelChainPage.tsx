@@ -1,6 +1,7 @@
 import { PlusOutlined, ThunderboltOutlined } from "@ant-design/icons";
 import { Alert, Button, Card, Col, Empty, Flex, Row, Tooltip, theme } from "antd";
 import { useState } from "react";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import { PageHeader } from "../../../../shared/components/PageHeader.js";
 import type { ModelFallbackConfig } from "../../domain/types.js";
 import { normalizeSlug } from "../../domain/utils.js";
@@ -13,6 +14,7 @@ import { EconomyPresetModal } from "../modal/EconomyPresetModal.js";
 const CHAIN_ALERT_KEY = "ccpg_dismiss_chain_alert";
 
 export default function ModelChainPage() {
+  const { t } = useLocale();
   const { token } = theme.useToken();
   const {
     chains,
@@ -43,8 +45,8 @@ export default function ModelChainPage() {
     <Flex vertical gap={token.paddingLG} style={{ paddingBottom: token.paddingLG * 2 }}>
       <Flex justify="space-between" align="flex-start" gap={token.padding}>
         <PageHeader
-          title="Model Chain"
-          description="Create custom Claude-discoverable models that try providers in your priority order."
+          title={t("modelChain.title")}
+          description={t("modelChain.description")}
         />
         <Flex gap={token.paddingXS} wrap>
           {!economyExists && (
@@ -73,8 +75,8 @@ export default function ModelChainPage() {
             dismissChainAlert();
             setShowAlert(false);
           }}
-          message="Model chains appear in Claude as Custom Models"
-          description="Use the model picker entry, or launch directly with ccpg --yourSlug. The first model is tried first; failures move to the next entry."
+          message={t("modelChain.alertMessage")}
+          description={t("modelChain.alertDesc")}
         />
       )}
 
@@ -89,7 +91,7 @@ export default function ModelChainPage() {
       ) : chains.length === 0 ? (
         <Empty
           image={Empty.PRESENTED_IMAGE_SIMPLE}
-          description="No chains yet"
+          description={t("modelChain.noChains")}
           style={{
             padding: token.paddingXL,
             border: `1px dashed ${token.colorBorderSecondary}`,

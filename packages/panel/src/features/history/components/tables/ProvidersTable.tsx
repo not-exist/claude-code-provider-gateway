@@ -1,5 +1,5 @@
 import { Flex, Table } from "antd";
-import { getProviderStatsColumns, type ProviderStatsRow } from "./providerStatsColumns.js";
+import { useProviderStatsColumns, type ProviderStatsRow } from "./providerStatsColumns.js";
 import { SectionLabel } from "./SectionLabel.js";
 
 interface ProvidersTableProps {
@@ -8,7 +8,7 @@ interface ProvidersTableProps {
 }
 
 export function ProvidersTable({ rows, title = "Providers" }: ProvidersTableProps) {
-  const columns = getProviderStatsColumns();
+  const columns = useProviderStatsColumns();
 
   return (
     <Flex vertical gap={4}>

@@ -2,6 +2,7 @@ import { CheckCircleOutlined, PlusOutlined } from "@ant-design/icons";
 import { Alert, Button, Form, Input, Modal, Space, Tag, Typography, Upload } from "antd";
 import type { UploadFile } from "antd/es/upload/interface";
 import { useState } from "react";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import type { ModelInfo, TestResult } from "../../domain/types.js";
 import type { CustomProviderDraft } from "../../services/providersService.js";
 
@@ -36,6 +37,7 @@ export function AddCustomProviderModal({
   onCreate,
   onCreated,
 }: AddCustomProviderModalProps) {
+  const { t } = useLocale();
   const [form] = Form.useForm<FormValues>();
   const [testResult, setTestResult] = useState<(TestResult & { models?: ModelInfo[] }) | null>(
     null,
@@ -76,35 +78,35 @@ export function AddCustomProviderModal({
   return (
     <Modal
       centered
-      title={`Add ${compatibility === "anthropic" ? "Anthropic" : "OpenAI"} Compatible Provider`}
+      title={t("addCustomProvider.title")}
       open={open}
       onCancel={onCancel}
       width={620}
       destroyOnClose
       footer={[
         <Button key="test" loading={testing} onClick={handleTest}>
-          Test Connection
+          {t("providerConfig.testConnection")}
         </Button>,
         <Button key="cancel" onClick={onCancel}>
-          Cancel
+          {t("common.cancel")}
         </Button>,
         <Button key="create" type="primary" loading={creating} onClick={handleCreate}>
-          Add Provider
+          {t("addCustomProvider.create")}
         </Button>,
       ]}
     >
       <Form form={form} layout="vertical" requiredMark={false} preserve={false}>
         <Form.Item
           name="name"
-          label="Name"
+          label={t("addCustomProvider.name")}
           rules={[{ required: true, message: "Provider name is required" }]}
         >
-          <Input placeholder="Acme AI" />
+          <Input placeholder={t("addCustomProvider.namePlaceholder")} />
         </Form.Item>
 
         <Form.Item
           name="slug"
-          label="Slug"
+          label={t("addCustomProvider.slug")}
           rules={[
             { required: true, message: "Slug is required" },
             {
@@ -113,31 +115,31 @@ export function AddCustomProviderModal({
             },
           ]}
         >
-          <Input placeholder="acme_ai" />
+          <Input placeholder={t("addCustomProvider.slugPlaceholder")} />
         </Form.Item>
 
         <Form.Item
           name="baseUrl"
-          label="Base URL"
+          label={t("addCustomProvider.baseUrl")}
           rules={[
             { required: true, message: "Base URL is required" },
             { type: "url", message: "Use a valid http:// or https:// URL" },
           ]}
         >
-          <Input placeholder="https://api.example.com/v1" />
+          <Input placeholder={t("addCustomProvider.baseUrlPlaceholder")} />
         </Form.Item>
 
         <Form.Item
           name="apiKey"
-          label="API Key"
+          label={t("addCustomProvider.apiKey")}
           rules={[{ required: true, message: "API key is required" }]}
         >
-          <Input.Password placeholder="sk-..." autoComplete="off" />
+          <Input.Password placeholder={t("addCustomProvider.apiKeyPlaceholder")} autoComplete="off" />
         </Form.Item>
 
         <Form.Item
           name="logo"
-          label="Logo"
+          label={t("addCustomProvider.logoLabel")}
           valuePropName="fileList"
           getValueFromEvent={(event) => event.fileList}
         >

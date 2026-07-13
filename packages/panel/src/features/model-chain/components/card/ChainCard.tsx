@@ -1,5 +1,6 @@
 import { BranchesOutlined, DeleteOutlined, EditOutlined, SyncOutlined } from "@ant-design/icons";
 import { Button, Card, Flex, Space, Switch, Tag, Typography, theme } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import { ProviderLogo } from "../../../providers/components/grid/ProviderLogo.js";
 import type { ModelFallbackConfig, RoutingOption } from "../../domain/types.js";
 import { CopySnippet } from "./CopySnippet.js";
@@ -23,6 +24,7 @@ export function ChainCard({
   onDelete,
   onToggleEnabled,
 }: ChainCardProps) {
+  const { t } = useLocale();
   const { token } = theme.useToken();
 
   const isRoundRobin = chain.routingStrategy === "round_robin";
@@ -48,11 +50,11 @@ export function ChainCard({
                 bordered={false}
                 style={{ fontFamily: "monospace", margin: 0 }}
               >
-                {chain.enabled ? "Enabled" : "Disabled"}
+                {chain.enabled ? t("common.enabled") : t("common.disabled")}
               </Tag>
               {isRoundRobin ? (
                 <Tag icon={<SyncOutlined />} color="purple" bordered={false} style={{ margin: 0 }}>
-                  Round Robin
+                  {t("modelChain.roundRobin")}
                 </Tag>
               ) : (
                 <Tag
@@ -61,7 +63,7 @@ export function ChainCard({
                   bordered={false}
                   style={{ margin: 0 }}
                 >
-                  Waterfall
+                  {t("modelChain.waterfall")}
                 </Tag>
               )}
             </Space>

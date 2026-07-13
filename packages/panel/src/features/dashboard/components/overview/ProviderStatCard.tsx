@@ -1,4 +1,5 @@
 import { Card, Flex, Typography, theme } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import { ProviderLogo } from "../../../providers/components/grid/ProviderLogo.js";
 import type { ProviderStat } from "../../domain/types.js";
 import { useProviderStatCard } from "../../hooks/useProviderStatCard.js";
@@ -11,6 +12,7 @@ interface ProviderStatCardProps {
 
 export function ProviderStatCard({ provider: p }: ProviderStatCardProps) {
   const { token } = theme.useToken();
+  const { t } = useLocale();
   const view = useProviderStatCard(p);
 
   return (
@@ -61,7 +63,7 @@ export function ProviderStatCard({ provider: p }: ProviderStatCardProps) {
             type="secondary"
             style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 0.5 }}
           >
-            Requests
+            {t("dashboard.providerRequests")}
           </Text>
           <Text style={{ fontSize: 20, fontWeight: 600, fontFamily: "monospace" }}>
             {p.requests}
