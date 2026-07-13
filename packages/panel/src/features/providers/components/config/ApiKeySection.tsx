@@ -7,6 +7,7 @@ import {
 } from "@ant-design/icons";
 import { Button, Flex, Input, Space, Typography, theme } from "antd";
 import { useState } from "react";
+import { useLocale } from "../../../../shared/i18n/index.js";
 
 const { Text } = Typography;
 
@@ -26,6 +27,7 @@ export function ApiKeySection({
   onRequestReplace,
 }: ApiKeySectionProps) {
   const { token } = theme.useToken();
+  const { t } = useLocale();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
 
@@ -61,7 +63,7 @@ export function ApiKeySection({
           <Text strong>
             <Space>
               <KeyOutlined style={{ color: token.colorPrimary }} />
-              API Key Authentication
+              {t("providerConfig.apiKeySection")}
             </Space>
           </Text>
           <Space wrap>
@@ -76,7 +78,7 @@ export function ApiKeySection({
                     setDraft("");
                   }}
                 >
-                  Edit
+                  {t("common.edit")}
                 </Button>
                 <Button
                   size="small"
@@ -85,7 +87,7 @@ export function ApiKeySection({
                   icon={<DeleteOutlined />}
                   onClick={onRequestRemove}
                 >
-                  Remove
+                  {t("common.remove")}
                 </Button>
               </>
             ) : editing ? (
@@ -94,8 +96,8 @@ export function ApiKeySection({
                 type="text"
                 icon={<CloseOutlined />}
                 onClick={close}
-                aria-label="Close"
-                title="Close"
+                aria-label={t("common.close")}
+                title={t("common.close")}
               />
             ) : null}
           </Space>
@@ -111,7 +113,7 @@ export function ApiKeySection({
           <Space.Compact style={{ width: "100%" }}>
             <Input.Password
               autoFocus={editing}
-              placeholder="Paste your provider API key here"
+              placeholder={t("providerConfig.apiKeyPlaceholder")}
               value={draft}
               style={{ fontFamily: "monospace" }}
               onChange={(e) => setDraft(e.target.value)}
@@ -126,7 +128,7 @@ export function ApiKeySection({
               disabled={!draft.trim()}
               onClick={submit}
             >
-              Save Key
+              {t("common.save")}
             </Button>
           </Space.Compact>
         )}

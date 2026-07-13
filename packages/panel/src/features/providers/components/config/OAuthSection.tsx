@@ -1,4 +1,5 @@
 import { Badge, Button, Flex, Space, Typography } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import { DEVICE_FLOW_PROVIDERS } from "../../domain/constants.js";
 import { getOAuthPresentation } from "../../domain/oauthPresentation.js";
 import type { CopilotFlow, OAuthInfo, ProviderInfo } from "../../domain/types.js";
@@ -25,6 +26,7 @@ export function OAuthSection({
   onLogout,
   onCancelFlow,
 }: OAuthSectionProps) {
+  const { t } = useLocale();
   const isDeviceFlow = DEVICE_FLOW_PROVIDERS.has(provider.id);
   const presentation = getOAuthPresentation(provider.id, provider.label);
   const oauth = provider.oauth;
@@ -56,6 +58,8 @@ export function OAuthSection({
 }
 
 function LoggedInRow({ oauth, onLogout }: { oauth: OAuthInfo; onLogout: () => void }) {
+  const { t } = useLocale();
+
   return (
     <Space>
       <Badge status="success" />
@@ -65,7 +69,7 @@ function LoggedInRow({ oauth, onLogout }: { oauth: OAuthInfo; onLogout: () => vo
           {oauth.accountId}
         </Text>
       )}
-      <Button onClick={onLogout}>Logout</Button>
+      <Button onClick={onLogout}>{t("providerConfig.oauthLogout")}</Button>
     </Space>
   );
 }

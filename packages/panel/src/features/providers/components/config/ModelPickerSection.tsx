@@ -6,6 +6,7 @@ import {
 } from "@ant-design/icons";
 import { Button, Flex, Input, Space, Tag, Tooltip, Typography, theme } from "antd";
 import { useMemo, useState } from "react";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import type { SuggestedModel } from "../../data/suggestedModels.js";
 
 const { Text } = Typography;
@@ -28,6 +29,7 @@ export function ModelPickerSection({
   onRemove,
 }: ModelPickerSectionProps) {
   const { token } = theme.useToken();
+  const { t } = useLocale();
   const [draft, setDraft] = useState("");
   const [filter, setFilter] = useState("");
   const [suggestionsExpanded, setSuggestionsExpanded] = useState(false);
@@ -125,7 +127,7 @@ export function ModelPickerSection({
               {(suggestions?.length ?? 0) > 6 && (
                 <Input
                   size="small"
-                  placeholder="Filter…"
+                  placeholder={t("providerConfig.filterPlaceholder")}
                   value={filter}
                   onChange={(e) => setFilter(e.target.value)}
                   style={{ width: 160 }}

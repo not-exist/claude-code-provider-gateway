@@ -1,5 +1,6 @@
 import { CaretDownOutlined, CaretRightOutlined, SearchOutlined } from "@ant-design/icons";
 import { Button, Checkbox, Col, Flex, Input, Row, Space, Spin, Tag, Typography, theme } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import type { ModelInfo } from "../../domain/types.js";
 import { stripModelPrefix } from "../../domain/utils.js";
 import { useModelSelector } from "../../hooks/useModelSelector.js";
@@ -22,6 +23,7 @@ export function ModelSelector({
   onDisabledModelsChange,
 }: ModelSelectorProps) {
   const { token } = theme.useToken();
+  const { t } = useLocale();
   const selector = useModelSelector({ models, disabledModels, onDisabledModelsChange });
 
   return (
@@ -32,7 +34,7 @@ export function ModelSelector({
         icon={selector.expanded ? <CaretDownOutlined /> : <CaretRightOutlined />}
         onClick={selector.toggleExpanded}
       >
-        Active models
+        {t("providerConfig.modelsSection")}
         {models !== null && (
           <Tag
             color={selector.activeCount === 0 ? "error" : "processing"}
@@ -48,11 +50,13 @@ export function ModelSelector({
           {loading && (
             <Space>
               <Spin size="small" />
-              <Text type="secondary">Loading models…</Text>
+              <Text type="secondary">{t("common.loadingModels")}</Text>
             </Space>
           )}
 
-          {!loading && models?.length === 0 && <Text type="secondary">No models found</Text>}
+          {!loading && models?.length === 0 && (
+            <Text type="secondary">{t("common.noModelsFound")}</Text>
+          )}
 
           {!loading && models && models.length > 0 && (
             <ModelGrid
@@ -97,6 +101,7 @@ function ModelGrid({
   onToggleModel,
 }: ModelGridProps) {
   const { token } = theme.useToken();
+  const { t } = useLocale();
 
   return (
     <Flex vertical gap={token.paddingSM}>
@@ -106,10 +111,10 @@ function ModelGrid({
           checked={!allDisabled && disabledSet.size === 0}
           onChange={onToggleAll}
         >
-          {allDisabled ? "Enable all" : "Disable all"}
+          {allDisabled ? t("common.enable") : t("common.disable")}
         </Checkbox>
         <Input
-          placeholder="Search models…"
+          placeholder={t("providerConfig.modelsSearchPlaceholder")}
           prefix={<SearchOutlined />}
           value={search}
           onChange={(e) => onSearch(e.target.value)}

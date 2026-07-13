@@ -7,6 +7,7 @@ import {
 } from "@ant-design/icons";
 import type { TableColumnsType } from "antd";
 import { Button, Popconfirm, Space, Tag, Typography, theme } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import { formatUptime } from "../../../../shared/utils/time.js";
 import { commandFor, formatDate, topModel } from "../../domain/format.js";
 import { providerLabel } from "../../domain/labels.js";
@@ -27,13 +28,14 @@ export function useSessionColumns({
   deletingId,
   exportingId,
 }: SessionColumnsOptions): TableColumnsType<Session> {
+  const { t } = useLocale();
   const { token } = theme.useToken();
   const activeDeletingId = deletingId ?? null;
   const activeExportingId = exportingId ?? null;
 
   const columns: TableColumnsType<Session> = [
     {
-      title: "Status",
+      title: t("common.status"),
       key: "status",
       width: 130,
       render: (_, session) => <SessionStatusTag status={session.status} />,
@@ -72,7 +74,7 @@ export function useSessionColumns({
       ),
     },
     {
-      title: "Requests",
+      title: t("history.requests"),
       dataIndex: "totalRequests",
       key: "requests",
       width: 90,
@@ -106,16 +108,16 @@ export function useSessionColumns({
                 (activeExportingId !== null && activeExportingId !== session.id)
               }
               aria-label={`Export session ${session.id} as JSON`}
-              title="Export as JSON"
+              title={t("common.exportJson")}
               onClick={() => onExport(session)}
             />
           )}
           {onDelete && (
             <Popconfirm
-              title="Delete this session?"
-              okText="Delete"
+              title={t("historyDetails.deleteSessionConfirm")}
+              okText={t("common.delete")}
               okButtonProps={{ danger: true }}
-              cancelText="Cancel"
+              cancelText={t("common.cancel")}
               placement="left"
               overlayInnerStyle={{ background: "#1a1915" }}
               onConfirm={() => onDelete(session.id)}
@@ -128,7 +130,7 @@ export function useSessionColumns({
                 loading={activeDeletingId === session.id}
                 disabled={activeExportingId === session.id}
                 aria-label={`Delete session ${session.id}`}
-                title="Delete Session"
+                title={t("historyDetails.deleteSession")}
               />
             </Popconfirm>
           )}

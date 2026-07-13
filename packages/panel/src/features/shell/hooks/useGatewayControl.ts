@@ -1,12 +1,13 @@
 import type { MessageInstance } from "antd/es/message/interface.js";
 import { useRef, useState } from "react";
+import { useLocale } from "../../../shared/i18n/index.js";
 import { daemonControl } from "../services/daemonControl.js";
 import { type DaemonState, useDaemonStatus } from "./useDaemonStatus.js";
 
 export const STATE_LABEL: Record<DaemonState, string> = {
-  running: "Gateway running",
-  offline: "Gateway stopped",
-  unknown: "Checking...",
+  running: "topbar.running",
+  offline: "topbar.offline",
+  unknown: "topbar.unknown",
 };
 
 export const STATE_BADGE: Record<DaemonState, "success" | "error" | "processing"> = {
@@ -20,6 +21,7 @@ interface UseGatewayControlOptions {
 }
 
 export function useGatewayControl({ message }: UseGatewayControlOptions) {
+  const { t } = useLocale();
   const { state, refresh, pause, resume } = useDaemonStatus();
   const [busy, setBusy] = useState(false);
   const lifecycleLocked = useRef(false);
@@ -33,13 +35,13 @@ export function useGatewayControl({ message }: UseGatewayControlOptions) {
     pause();
     try {
       await daemonControl.stop();
-      message.success("Stop signal sent");
+      message.success(t("topbar.stopSignalSent"));
       setTimeout(() => {
         void refresh();
         resume();
       }, 500);
     } catch (err) {
-      message.error(err instanceof Error ? err.message : "Failed to stop gateway");
+      message.error(err instanceof Error ? err.message : t("topbar.failedToStop"));
       resume();
     } finally {
       lifecycleLocked.current = false;
@@ -55,10 +57,10 @@ export function useGatewayControl({ message }: UseGatewayControlOptions) {
     setBusy(true);
     try {
       await daemonControl.start();
-      message.success("Gateway started");
+      message.success(t("topbar.gatewayStarted"));
       setTimeout(() => void refresh(), 500);
     } catch (err) {
-      message.error(err instanceof Error ? err.message : "Failed to start gateway");
+      message.error(err instanceof Error ? err.message : t("topbar.failedToStart"));
     } finally {
       lifecycleLocked.current = false;
       setBusy(false);

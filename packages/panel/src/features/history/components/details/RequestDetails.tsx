@@ -1,4 +1,5 @@
 import { Descriptions, Flex, Space, Tag, Typography, theme } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import type { RequestLogEntry } from "../../domain/types.js";
 import { SectionLabel } from "../tables/SectionLabel.js";
 
@@ -9,6 +10,7 @@ interface RequestDetailsProps {
 }
 
 export function RequestDetails({ entry: r }: RequestDetailsProps) {
+  const { t } = useLocale();
   const { token } = theme.useToken();
 
   return (
@@ -18,22 +20,22 @@ export function RequestDetails({ entry: r }: RequestDetailsProps) {
       style={{ padding: `${token.paddingSM}px ${token.paddingLG}px` }}
     >
       <Descriptions size="small" column={2} bordered>
-        <Descriptions.Item label="ID">{r.id}</Descriptions.Item>
-        <Descriptions.Item label="Timestamp">
+        <Descriptions.Item label={t("historyDetails.requestId")}>{r.id}</Descriptions.Item>
+        <Descriptions.Item label={t("historyDetails.timestamp")}>
           {new Date(r.timestamp).toLocaleString()}
         </Descriptions.Item>
-        <Descriptions.Item label="Requested Model">{r.requestedModel}</Descriptions.Item>
-        <Descriptions.Item label="Provider">{r.providerId}</Descriptions.Item>
-        <Descriptions.Item label="Provider Model">{r.providerModel}</Descriptions.Item>
-        <Descriptions.Item label="Input Tokens">{r.inputTokens}</Descriptions.Item>
-        <Descriptions.Item label="Latency (ms)">{r.latencyMs}</Descriptions.Item>
-        <Descriptions.Item label="Status">
+        <Descriptions.Item label={t("historyDetails.requestedModel")}>{r.requestedModel}</Descriptions.Item>
+        <Descriptions.Item label={t("common.provider")}>{r.providerId}</Descriptions.Item>
+        <Descriptions.Item label={t("historyDetails.providerModel")}>{r.providerModel}</Descriptions.Item>
+        <Descriptions.Item label={t("historyDetails.inputTokens")}>{r.inputTokens}</Descriptions.Item>
+        <Descriptions.Item label={t("historyDetails.latencyMs")}>{r.latencyMs}</Descriptions.Item>
+        <Descriptions.Item label={t("historyDetails.status")}>
           <Tag color={r.status === "ok" ? "success" : "error"} style={{ margin: 0 }}>
             {r.status}
           </Tag>
         </Descriptions.Item>
         {r.error && (
-          <Descriptions.Item label="Error" span={2}>
+          <Descriptions.Item label={t("historyDetails.error")} span={2}>
             <Text type="danger">{r.error}</Text>
           </Descriptions.Item>
         )}
@@ -51,14 +53,14 @@ export function RequestDetails({ entry: r }: RequestDetailsProps) {
           </Space>
         </Flex>
       )}
-      {r.prompt && <CodeBlock label="Prompt" content={r.prompt} />}
+      {r.prompt && <CodeBlock label={t("historyDetails.prompt")} content={r.prompt} />}
       {r.requestPreview && (
         <CodeBlock
-          label="Provider Request Preview"
+          label={t("historyDetails.providerRequestPreview")}
           content={JSON.stringify(r.requestPreview, null, 2)}
         />
       )}
-      {r.response && <CodeBlock label="Response" content={r.response} />}
+      {r.response && <CodeBlock label={t("historyDetails.response")} content={r.response} />}
     </Flex>
   );
 }

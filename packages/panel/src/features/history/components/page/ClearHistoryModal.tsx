@@ -1,4 +1,5 @@
 import { Button, Modal, Typography } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 
 const { Text } = Typography;
 
@@ -10,24 +11,26 @@ interface ClearHistoryModalProps {
 }
 
 export function ClearHistoryModal({ open, loading, onCancel, onConfirm }: ClearHistoryModalProps) {
+  const { t } = useLocale();
+
   return (
     <Modal
       centered
       open={open}
-      title="Clear archived history?"
+      title={t("history.clearArchivedHistory")}
       onCancel={() => !loading && onCancel()}
       footer={[
         <Button key="cancel" onClick={onCancel} disabled={loading}>
-          Cancel
+          {t("common.cancel")}
         </Button>,
         <Button key="ok" type="primary" danger loading={loading} onClick={onConfirm} autoFocus>
-          Clear history
+          {t("history.clear")}
         </Button>,
       ]}
       width={440}
     >
       <Text type="secondary">
-        Removes completed and crashed sessions. The currently running session is kept.
+        {t("history.clearHistoryConfirm")}
       </Text>
     </Modal>
   );

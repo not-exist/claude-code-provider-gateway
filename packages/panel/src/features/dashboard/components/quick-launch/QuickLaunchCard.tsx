@@ -1,5 +1,6 @@
 import { CodeOutlined, CopyOutlined } from "@ant-design/icons";
 import { Card, Divider, Empty, Flex, Tooltip, Typography, theme } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import { useCopyToClipboard } from "../../../../shared/hooks/useCopyToClipboard.js";
 import type { LaunchItem } from "../../domain/types.js";
 
@@ -13,6 +14,7 @@ interface QuickLaunchCardProps {
 export function QuickLaunchCard({ items, error }: QuickLaunchCardProps) {
   const { copiedKey, copy } = useCopyToClipboard();
   const { token } = theme.useToken();
+  const { t } = useLocale();
 
   return (
     <Card
@@ -47,7 +49,7 @@ export function QuickLaunchCard({ items, error }: QuickLaunchCardProps) {
             <CodeOutlined />
           </div>
           <Text strong style={{ fontSize: 16 }}>
-            Quick Launch
+            {t("dashboard.quickLaunch")}
           </Text>
         </Flex>
       }
@@ -147,10 +149,11 @@ function QuickLaunchTag({
   onCopy: (key: string, value: string) => void;
 }) {
   const { token } = theme.useToken();
+  const { t } = useLocale();
   const isChain = isChainLaunchItem(item);
 
   return (
-    <Tooltip title={copied ? "Copied!" : `Copy ${item.label}`}>
+    <Tooltip title={copied ? t("common.copied") : `Copy ${item.label}`}>
       <button
         type="button"
         onClick={() => onCopy(item.id, item.cmd)}

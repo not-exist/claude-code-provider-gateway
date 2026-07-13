@@ -16,6 +16,7 @@ import {
   Typography,
   theme,
 } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import type { ChainRoutingStrategy } from "../../../../../../daemon/src/config/schema.js";
 import type { RoutingOption } from "../../domain/types.js";
 import { normalizeSlug } from "../../domain/utils.js";
@@ -70,6 +71,7 @@ export function ChainModal({
   onCancel,
   onSave,
 }: ChainModalProps) {
+  const { t } = useLocale();
   const { token } = theme.useToken();
 
   const canSave =
@@ -87,12 +89,12 @@ export function ChainModal({
     <Modal
       centered
       open={open}
-      title={draft?.id.startsWith("chain_") ? "Create Model Chain" : "Edit Model Chain"}
+      title={draft?.id.startsWith("chain_") ? t("modelChain.createChain") : t("modelChain.editChain")}
       width={720}
       onCancel={onCancel}
       footer={[
         <Button key="cancel" onClick={onCancel}>
-          Cancel
+          {t("common.cancel")}
         </Button>,
         <Button
           key="save"

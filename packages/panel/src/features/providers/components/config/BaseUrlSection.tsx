@@ -1,6 +1,7 @@
 import { CloseOutlined, EditOutlined, LinkOutlined, SaveOutlined } from "@ant-design/icons";
 import { Alert, Button, Flex, Input, Space, Typography, theme } from "antd";
 import { useState } from "react";
+import { useLocale } from "../../../../shared/i18n/index.js";
 
 const { Text } = Typography;
 
@@ -11,6 +12,7 @@ interface BaseUrlSectionProps {
 
 export function BaseUrlSection({ baseUrl, onRequestChange }: BaseUrlSectionProps) {
   const { token } = theme.useToken();
+  const { t } = useLocale();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(baseUrl ?? "");
 
@@ -42,7 +44,7 @@ export function BaseUrlSection({ baseUrl, onRequestChange }: BaseUrlSectionProps
           <Text strong>
             <Space>
               <LinkOutlined style={{ color: token.colorPrimary }} />
-              Custom Base URL
+              {t("providerConfig.baseUrlSection")}
             </Space>
           </Text>
           {!editing ? (
@@ -55,7 +57,7 @@ export function BaseUrlSection({ baseUrl, onRequestChange }: BaseUrlSectionProps
                 setDraft(baseUrl ?? "");
               }}
             >
-              Edit
+              {t("common.edit")}
             </Button>
           ) : (
             <Button size="small" type="text" icon={<CloseOutlined />} onClick={cancel} />
@@ -70,7 +72,7 @@ export function BaseUrlSection({ baseUrl, onRequestChange }: BaseUrlSectionProps
               <Input
                 autoFocus
                 size="large"
-                placeholder="http://localhost:..."
+                placeholder={t("providerConfig.baseUrlPlaceholder")}
                 value={draft}
                 style={{ fontFamily: "monospace" }}
                 onChange={(e) => setDraft(e.target.value)}
@@ -86,13 +88,13 @@ export function BaseUrlSection({ baseUrl, onRequestChange }: BaseUrlSectionProps
                 disabled={!draft.trim() || draft.trim() === baseUrl}
                 onClick={submit}
               >
-                Save URL
+                {t("common.save")}
               </Button>
             </Flex>
             <Alert
               type="warning"
               showIcon
-              message="Provider credentials are sent to this endpoint. Use only URLs you trust."
+              message={t("providerConfig.baseUrlWarning")}
               style={{ fontSize: 13, padding: "6px 12px" }}
             />
           </Flex>

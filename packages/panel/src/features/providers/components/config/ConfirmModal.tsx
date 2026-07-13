@@ -1,4 +1,5 @@
 import { Button, Modal, Typography } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import type { ConfirmAction, ProviderInfo } from "../../domain/types.js";
 
 const { Text } = Typography;
@@ -42,6 +43,8 @@ const COPY = {
 } as const;
 
 export function ConfirmModal({ action, providers, onCancel, onConfirm }: ConfirmModalProps) {
+  const { t } = useLocale();
+
   if (!action) return null;
   const label = providers.find((p) => p.id === action.providerId)?.label ?? action.providerId;
   const copy = COPY[action.kind];
@@ -54,7 +57,7 @@ export function ConfirmModal({ action, providers, onCancel, onConfirm }: Confirm
       onCancel={onCancel}
       footer={[
         <Button key="cancel" onClick={onCancel}>
-          Cancel
+          {t("confirmModal.cancel")}
         </Button>,
         <Button key="ok" type="primary" danger={copy.danger} onClick={onConfirm} autoFocus>
           {copy.okText}

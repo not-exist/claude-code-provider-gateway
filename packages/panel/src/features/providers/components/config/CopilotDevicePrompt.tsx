@@ -1,5 +1,6 @@
 import { CheckOutlined } from "@ant-design/icons";
 import { Badge, Button, Flex, Space, Typography, theme } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import { useCopyToClipboard } from "../../../../shared/hooks/useCopyToClipboard.js";
 import { openExternal } from "../../../../shared/openExternal.js";
 import type { CopilotFlow } from "../../domain/types.js";
@@ -20,6 +21,7 @@ export function CopilotDevicePrompt({
   onCancel,
 }: CopilotDevicePromptProps) {
   const { token } = theme.useToken();
+  const { t } = useLocale();
   const { copiedKey, copy } = useCopyToClipboard();
   const copied = copiedKey === flow.flowId;
 
@@ -34,7 +36,7 @@ export function CopilotDevicePrompt({
       }}
     >
       <Text type="secondary">
-        Step 1 — Enter this code on {approvalSite} (already opened in a new tab):
+        Step 1 — {t("copilot.enterCode")} {t("copilot.onUrl")} {approvalSite} (already opened in a new tab):
       </Text>
       <Space>
         <Text
@@ -52,7 +54,7 @@ export function CopilotDevicePrompt({
           icon={copied ? <CheckOutlined /> : undefined}
           onClick={() => copy(flow.flowId, flow.userCode)}
         >
-          {copied ? "Copied" : "Copy"}
+          {copied ? t("common.copied") : t("common.copy")}
         </Button>
       </Space>
       <Text type="secondary">
@@ -69,7 +71,7 @@ export function CopilotDevicePrompt({
       </Text>
       <Space>
         <Badge status="processing" text={<Text type="secondary">{waitingText}</Text>} />
-        <Button onClick={onCancel}>Cancel</Button>
+        <Button onClick={onCancel}>{t("common.cancel")}</Button>
       </Space>
     </Flex>
   );

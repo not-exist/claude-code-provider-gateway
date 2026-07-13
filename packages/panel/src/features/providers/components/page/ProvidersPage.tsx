@@ -1,6 +1,7 @@
 import { PlusOutlined } from "@ant-design/icons";
 import { App, Button, Flex, Tabs, Typography, theme } from "antd";
 import { PageHeader } from "../../../../shared/components/PageHeader.js";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import { useProvidersPage } from "../../hooks/useProvidersPage.js";
 import { AddCustomProviderModal } from "../config/AddCustomProviderModal.js";
 import { ConfirmModal } from "../config/ConfirmModal.js";
@@ -14,6 +15,7 @@ const { Text } = Typography;
 export default function ProvidersPage() {
   const { token } = theme.useToken();
   const { message } = App.useApp();
+  const { t } = useLocale();
   const page = useProvidersPage({ message });
   const openCustomProviderModal = (compatibility: "openai" | "anthropic") => {
     page.setCustomCompatibility(compatibility);
@@ -42,21 +44,21 @@ export default function ProvidersPage() {
               icon={<PlusOutlined />}
               onClick={() => openCustomProviderModal("anthropic")}
             >
-              Add Anthropic Compatible
+              {t("providers.addAnthropicCompatible")}
             </Button>
             <Button
               size="small"
               icon={<PlusOutlined />}
               onClick={() => openCustomProviderModal("openai")}
             >
-              Add OpenAI Compatible
+              {t("providers.addOpenAICompatible")}
             </Button>
           </Flex>
         }
         items={[
           {
             key: "all",
-            label: "All Providers",
+            label: t("providers.allProviders"),
             children: page.providersApi.isLoading ? (
               <ProviderGridSkeleton />
             ) : (
@@ -73,7 +75,7 @@ export default function ProvidersPage() {
           },
           {
             key: "favorites",
-            label: "Favorites",
+            label: t("providers.favorites"),
             children: (
               <FavoritesTab
                 favorites={page.favoritesApi.favorites}
@@ -127,11 +129,13 @@ export default function ProvidersPage() {
 }
 
 function ProvidersHeader() {
+  const { t } = useLocale();
+
   return (
     <div>
-      <PageHeader title="Providers" />
+      <PageHeader title={t("providers.title")} />
       <Text type="secondary" style={{ marginTop: 8, display: "block" }}>
-        Select a provider card below to configure API keys, custom URLs, and active models.
+        {t("providers.description")}
       </Text>
     </div>
   );

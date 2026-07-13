@@ -1,5 +1,6 @@
 import type { TableColumnsType } from "antd";
 import { Space, Tag, Tooltip, Typography, theme } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import { formatNumber, formatTime } from "../../domain/format.js";
 import { providerLabel } from "../../domain/labels.js";
 import type { RequestLogEntry } from "../../domain/types.js";
@@ -7,6 +8,7 @@ import type { RequestLogEntry } from "../../domain/types.js";
 const { Text } = Typography;
 
 export function useRequestLogColumns(): TableColumnsType<RequestLogEntry> {
+  const { t } = useLocale();
   const { token } = theme.useToken();
 
   return [
@@ -52,7 +54,7 @@ export function useRequestLogColumns(): TableColumnsType<RequestLogEntry> {
       render: (value: number) => <MutedMonoText value={`${value}ms`} />,
     },
     {
-      title: "Status",
+      title: t("common.status"),
       dataIndex: "status",
       key: "s",
       width: 70,
@@ -91,7 +93,7 @@ export function useRequestLogColumns(): TableColumnsType<RequestLogEntry> {
       render: (_, entry) => <YesNoTag active={hasUserInput(entry)} />,
     },
     {
-      title: "Error",
+      title: t("common.error"),
       dataIndex: "error",
       key: "err",
       ellipsis: true,

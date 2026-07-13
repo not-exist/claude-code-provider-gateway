@@ -1,4 +1,5 @@
 import { Flex, Typography, theme } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import { formatUptime } from "../../../../shared/utils/time.js";
 import { formatDate } from "../../domain/format.js";
 import { providerLabel } from "../../domain/labels.js";
@@ -11,6 +12,7 @@ interface SessionMetadataCardsProps {
 }
 
 export function SessionMetadataCards({ session }: SessionMetadataCardsProps) {
+  const { t } = useLocale();
   const { token } = theme.useToken();
 
   const items = [
@@ -22,7 +24,7 @@ export function SessionMetadataCards({ session }: SessionMetadataCardsProps) {
     { label: "Duration", value: formatUptime(session.durationMs) },
     { label: "Mode", value: session.modelMode },
     {
-      label: "Providers",
+      label: t("liveSession.providers"),
       value:
         session.modelMode === "all"
           ? session.enabledProviders.map(providerLabel).join(", ") || "none"

@@ -21,6 +21,10 @@ const en = {
   "topbar.running": "Gateway running",
   "topbar.offline": "Gateway stopped",
   "topbar.unknown": "Checking…",
+  "topbar.stopSignalSent": "Stop signal sent",
+  "topbar.failedToStop": "Failed to stop gateway",
+  "topbar.gatewayStarted": "Gateway started",
+  "topbar.failedToStart": "Failed to start gateway",
   "topbar.devOnlyTooltip":
     "In development, restart it with `bun dev:desk`",
 
