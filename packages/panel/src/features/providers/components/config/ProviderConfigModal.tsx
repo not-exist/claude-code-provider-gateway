@@ -43,7 +43,7 @@ export function ProviderConfigModal({
   return (
     <Modal
       centered
-      title={<ProviderConfigTitle provider={p} onToggleEnabled={onToggleEnabled} />}
+      title={<ProviderConfigTitle provider={p} onToggleEnabled={onToggleEnabled} t={t} />}
       open={open}
       onCancel={onClose}
       footer={[
@@ -81,9 +81,11 @@ export function ProviderConfigModal({
 function ProviderConfigTitle({
   provider,
   onToggleEnabled,
+  t,
 }: {
   provider: ProviderInfo;
   onToggleEnabled: (id: string, currentlyEnabled: boolean) => void;
+  t: (key: string, replacements?: Record<string, string>) => string;
 }) {
   const apiKeyUrl = getApiKeyLink(provider.id);
 
@@ -104,20 +106,20 @@ function ProviderConfigTitle({
           size={28}
         />
         <span style={{ fontSize: 18 }}>
-          {provider.label} Configuration
+          {provider.label} {t("providerConfig.configuration")}
         </span>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         {apiKeyUrl && (
           <Button size="small" icon={<ExportOutlined />} onClick={() => openExternal(apiKeyUrl)}>
-            Get API Key
+            {t("providerConfig.getApiKey")}
           </Button>
         )}
         <Switch
           size="small"
           checked={provider.enabled}
           onChange={() => onToggleEnabled(provider.id, provider.enabled)}
-          aria-label={`${provider.enabled ? "Disable" : "Enable"} ${provider.label}`}
+          aria-label={`${t(provider.enabled ? "common.disable" : "common.enable")} ${provider.label}`}
         />
       </div>
     </div>

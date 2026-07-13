@@ -1,4 +1,5 @@
 import { Flex, Table } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import { useProviderStatsColumns, type ProviderStatsRow } from "./providerStatsColumns.js";
 import { SectionLabel } from "./SectionLabel.js";
 
@@ -7,12 +8,13 @@ interface ProvidersTableProps {
   title?: string;
 }
 
-export function ProvidersTable({ rows, title = "Providers" }: ProvidersTableProps) {
+export function ProvidersTable({ rows, title }: ProvidersTableProps) {
+  const { t } = useLocale();
   const columns = useProviderStatsColumns();
 
   return (
     <Flex vertical gap={4}>
-      <SectionLabel>{title}</SectionLabel>
+      <SectionLabel>{title ?? t("providers.title")}</SectionLabel>
       <Table<ProviderStatsRow>
         dataSource={rows}
         rowKey={([id]) => id}

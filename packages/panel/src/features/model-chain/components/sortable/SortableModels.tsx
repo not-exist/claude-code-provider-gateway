@@ -14,6 +14,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { App, Empty, Flex } from "antd";
+import { useLocale } from "../../../../shared/i18n/index.js";
 import type { ModelFallbackEntry, RoutingOption } from "../../domain/types.js";
 import type { DraftChain } from "../../hooks/useChainDraft.js";
 import { SortableModelRow } from "./SortableModelRow.js";
@@ -25,6 +26,7 @@ interface SortableModelsProps {
 }
 
 export function SortableModels({ draft, options, onChange }: SortableModelsProps) {
+  const { t } = useLocale();
   const { message } = App.useApp();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -42,7 +44,9 @@ export function SortableModels({ draft, options, onChange }: SortableModelsProps
   };
 
   if (draft.models.length === 0) {
-    return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Add at least one model" />;
+    return (
+      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t("modelChain.addAtLeastOne")} />
+    );
   }
 
   return (
@@ -58,7 +62,7 @@ export function SortableModels({ draft, options, onChange }: SortableModelsProps
               options={options}
               onRemove={() => {
                 onChange(draft.models.filter((_, i) => i !== index));
-                message.success("Model removed");
+                message.success(t("modelChain.modelRemoved"));
               }}
             />
           ))}

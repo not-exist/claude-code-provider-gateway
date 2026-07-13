@@ -28,7 +28,7 @@ export function useSessionColumns({
   deletingId,
   exportingId,
 }: SessionColumnsOptions): TableColumnsType<Session> {
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   const { token } = theme.useToken();
   const activeDeletingId = deletingId ?? null;
   const activeExportingId = exportingId ?? null;
@@ -41,7 +41,7 @@ export function useSessionColumns({
       render: (_, session) => <SessionStatusTag status={session.status} />,
     },
     {
-      title: "Command",
+      title: t("history.command"),
       key: "command",
       ellipsis: true,
       render: (_, session) => (
@@ -54,19 +54,23 @@ export function useSessionColumns({
       ),
     },
     {
-      title: "Top model",
+      title: t("history.topModel"),
       key: "model",
       ellipsis: true,
       render: (_, session) => <TopModelText session={session} />,
     },
     {
-      title: "Started",
+      title: t("history.started"),
       key: "started",
       width: 160,
-      render: (_, session) => <Text type="secondary">{formatDate(session.startedAt)}</Text>,
+      render: (_, session) => (
+        <Text type="secondary">
+          {formatDate(session.startedAt, locale, t("history.today"))}
+        </Text>
+      ),
     },
     {
-      title: "Duration",
+      title: t("history.duration"),
       key: "duration",
       width: 90,
       render: (_, session) => (
@@ -107,7 +111,7 @@ export function useSessionColumns({
                 activeDeletingId === session.id ||
                 (activeExportingId !== null && activeExportingId !== session.id)
               }
-              aria-label={`Export session ${session.id} as JSON`}
+              aria-label={t("history.exportSessionAria", { id: session.id })}
               title={t("common.exportJson")}
               onClick={() => onExport(session)}
             />
@@ -129,7 +133,7 @@ export function useSessionColumns({
                 icon={<DeleteOutlined />}
                 loading={activeDeletingId === session.id}
                 disabled={activeExportingId === session.id}
-                aria-label={`Delete session ${session.id}`}
+                aria-label={t("history.deleteSessionAria", { id: session.id })}
                 title={t("historyDetails.deleteSession")}
               />
             </Popconfirm>

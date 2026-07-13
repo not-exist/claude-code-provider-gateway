@@ -91,6 +91,23 @@ const zhCN = {
   "dashboard.providerRequests": "次请求",
   "dashboard.providerErrors": "次错误",
   "dashboard.none": "无",
+  "dashboard.logLines": "{count} 行",
+  "dashboard.resume": "继续",
+  "dashboard.pause": "暂停",
+  "dashboard.waitingForLogActivity": "等待日志活动…",
+  "dashboard.noHistory": "暂无历史记录",
+  "dashboard.errorRate": "{rate}% 错误",
+  "dashboard.avgLatency": "平均延迟",
+  "dashboard.lastActive": "上次活动：{time}",
+  "dashboard.uptime": "运行时间",
+  "dashboard.topModel": "最常用模型",
+  "dashboard.daemonPid": "守护进程 PID",
+  "dashboard.quickLaunchUnavailable": "快速启动不可用：",
+  "dashboard.noProvidersEnabledHint": "尚未启用提供商 - 请在「提供商」标签页中启用一个",
+  "dashboard.quickLaunchHint": "使用提供商或模型链快捷方式运行 Claude Code：",
+  "dashboard.modelChains": "模型链",
+  "dashboard.copyLaunchItem": "复制 {label}",
+  "dashboard.chain": "链",
 
   // ── Shell 配置 ──
   "shell.installActions": "安装操作",
@@ -119,6 +136,11 @@ const zhCN = {
   "providers.oauthProviders": "OAuth 提供商",
   "providers.apiKeyProviders": "API 密钥提供商",
   "providers.customProviders": "自定义提供商",
+  "providers.configure": "配置",
+  "providers.addFavorite": "添加到收藏",
+  "providers.removeFavorite": "从收藏中移除",
+  "providers.customProvidersEmpty":
+    "暂无自定义提供商。请使用上方标签页操作添加兼容 OpenAI 或 Anthropic 的端点。",
 
   // ── 提供商配置 ──
   "providerConfig.apiKeySection": "API 密钥",
@@ -147,6 +169,8 @@ const zhCN = {
   "providerConfig.testConnection": "测试连接",
   "providerConfig.testing": "测试中…",
   "providerConfig.save": "保存",
+  "providerConfig.configuration": "配置",
+  "providerConfig.getApiKey": "获取 API 密钥",
 
   // ── 添加自定义提供商 ──
   "addCustomProvider.title": "添加自定义提供商",
@@ -170,6 +194,20 @@ const zhCN = {
   "confirmModal.enable": "启用",
   "confirmModal.disable": "禁用",
   "confirmModal.cancel": "取消",
+  "confirmModal.replaceKeyTitle": "替换 API 密钥？",
+  "confirmModal.replaceKeyText":
+    "{provider} 已配置 API 密钥。保存新密钥将永久覆盖现有密钥。",
+  "confirmModal.replace": "替换",
+  "confirmModal.removeKeyTitle": "移除 API 密钥？",
+  "confirmModal.removeKeyText":
+    "{provider} 的 API 密钥将被永久移除。添加新密钥前，该提供商将无法工作。",
+  "confirmModal.changeBaseUrlTitle": "更改基础 URL？",
+  "confirmModal.changeBaseUrlText":
+    "要更新 {provider} 的基础 URL 吗？请确认新端点可访问。",
+  "confirmModal.update": "更新",
+  "confirmModal.deleteProviderTitle": "删除自定义提供商？",
+  "confirmModal.deleteProviderText":
+    "{provider} 将被永久移除，包括其 API 密钥、路由规则和 Logo。",
 
   // ── 路由 ──
   "routing.title": "路由",
@@ -213,6 +251,7 @@ const zhCN = {
   "modelChain.totalStreamTimeout": "流式传输总超时",
   "modelChain.addModel": "添加模型",
   "modelChain.addAtLeastOne": "至少添加一个模型",
+  "modelChain.modelRemoved": "已移除模型",
   "modelChain.providerPlaceholder": "提供商",
   "modelChain.modelPlaceholder": "模型",
   "modelChain.dragToReorder": "拖拽以重新排序",
@@ -225,6 +264,36 @@ const zhCN = {
   "modelChain.economyLocalLabel": "本地/最后手段",
   "modelChain.economyLocalPlaceholder": "跳过此槽位",
   "modelChain.createEconomyPreset": "创建经济/本地预设",
+  "modelChain.commandCopied": "命令已复制到剪贴板",
+  "modelChain.saveChain": "保存模型链",
+  "modelChain.slugTooltip": "字母、数字、连字符、下划线",
+  "modelChain.waterfallDescription":
+    "从主模型开始，失败时依次切换到下一个模型。",
+  "modelChain.roundRobinDescription":
+    "每次请求随机选择模型，以分散负载。",
+  "modelChain.waterfallAttemptsHint":
+    "主模型在切换到下一个模型前的尝试次数。",
+  "modelChain.roundRobinAttemptsHint":
+    "初始选中模型的尝试次数；后续回退选择各尝试一次。",
+  "modelChain.advancedSettings": "高级设置",
+  "modelChain.advancedSettingsDescription":
+    "此模型链的回退时序。留空将使用稳健的默认值。",
+  "modelChain.requestTimeoutTooltip":
+    "默认 {seconds} 秒。在模型链尝试下一个模型前，等待提供商返回响应头的时间。",
+  "modelChain.firstTokenTimeoutTooltip":
+    "默认 {seconds} 秒。显示任何回答前等待有效 Anthropic 内容的时间；超时后将尝试下一个模型。",
+  "modelChain.totalStreamTimeoutTooltip":
+    "默认 {seconds} 秒。单次模型链尝试的最长时间；大上下文或较慢的本地模型可适当增加。",
+  "modelChain.chainOrder": "模型链顺序",
+  "modelChain.addAtLeastTwo": "至少添加 2 个模型",
+  "modelChain.waterfallOrderHint":
+    "拖拽以重新排序 · 从上到下依次尝试，失败时继续下一个",
+  "modelChain.roundRobinOrderHint":
+    "顺序无关 · 每个回退模型尝试 1 次",
+  "modelChain.economyTooltip":
+    "从可用提供商创建经济高效的瀑布流模型链（快速 → 中档 → 本地）。",
+  "modelChain.economyLocal": "经济/本地",
+  "modelChain.createFirstChain": "创建你的第一个模型链",
 
   // ── OpenAI 网关 ──
   "openaiGateway.title": "OpenAI 网关",
@@ -242,6 +311,24 @@ const zhCN = {
   "openaiGateway.exampleModel": "示例模型",
   "openaiGateway.availableModels": "可用模型",
   "openaiGateway.modelsCount": "{count} 个模型",
+  "openaiGateway.modelId": "模型 ID",
+  "openaiGateway.copyModel": "复制模型 {model}",
+  "openaiGateway.provider": "提供商",
+  "openaiGateway.apiKey": "API 密钥",
+  "openaiGateway.connectionDetails": "连接详情",
+  "openaiGateway.copyField": "复制 {field}",
+  "openaiGateway.modelExplorer": "模型浏览器",
+  "openaiGateway.clientSetup": "客户端设置",
+  "openaiGateway.compatibleClients": "兼容的客户端",
+  "openaiGateway.compatibleClientsDescription":
+    "使用上方的基础 URL，并在 Cursor 或任何兼容 OpenAI 的客户端中将 API 密钥作为 Bearer Token 粘贴。",
+  "openaiGateway.modelSelection": "模型选择",
+  "openaiGateway.modelSelectionDescriptionBefore": "从浏览器中选择任意模型。支持如",
+  "openaiGateway.modelSelectionDescriptionAfter": "这样的短 ID。",
+  "openaiGateway.listModelsExample": "列出模型",
+  "openaiGateway.chatCompletionExample": "聊天补全",
+  "openaiGateway.streamingChatExample": "流式聊天",
+  "openaiGateway.integrationExamples": "集成示例",
 
   // ── 历史记录 ──
   "history.title": "历史记录",
@@ -257,6 +344,28 @@ const zhCN = {
   "history.requests": "请求",
   "history.tokens": "Token",
   "history.sessions": "会话",
+  "history.archivedSessions": "已存档会话",
+  "history.totalRequests": "请求总数",
+  "history.autoRefresh": "每 {seconds} 秒自动刷新",
+  "history.clearHistory": "清除历史记录",
+  "history.requestCount": "{count} 次请求",
+  "history.started": "开始时间",
+  "history.ended": "结束时间",
+  "history.running": "运行中",
+  "history.today": "今天",
+  "history.duration": "持续时间",
+  "history.mode": "模式",
+  "history.none": "无",
+  "history.command": "命令",
+  "history.topModel": "最常用模型",
+  "history.requestedModel": "请求的模型",
+  "history.lastRoutedTo": "上次路由到",
+  "history.tokensIn": "输入 Token",
+  "history.avgLatency": "平均延迟",
+  "history.exportSessionAria": "将会话 {id} 导出为 JSON",
+  "history.deleteSessionAria": "删除会话 {id}",
+  "history.exportedSessionDesktop": "会话 JSON 已保存至 {path}",
+  "history.exportedSessionDownload": "已下载 {fileName}",
 
   // ── 历史详情 ──
   "historyDetails.requestId": "ID",
@@ -277,6 +386,12 @@ const zhCN = {
   "historyDetails.providersTable": "会话提供商",
   "historyDetails.requestLog": "请求日志",
   "historyDetails.noRequestsYet": "暂无请求",
+  "historyDetails.time": "时间",
+  "historyDetails.requested": "请求模型",
+  "historyDetails.latency": "延迟",
+  "historyDetails.savers": "节省器",
+  "historyDetails.preview": "预览",
+  "historyDetails.userInput": "用户输入",
   "historyDetails.deleteSession": "删除会话",
   "historyDetails.deleteSessionConfirm": "删除此会话？",
 
@@ -313,6 +428,8 @@ const zhCN = {
   "settings.server.authToken": "认证令牌",
   "settings.server.dockerNotice":
     "Docker 从 docker-compose.yml 发布此端口。端口更改需要重新创建容器。",
+  "settings.server.proxyPortHelp":
+    "Claude Code 通过 ANTHROPIC_BASE_URL 指向此处",
 
   // ── 设置：网络工具 ──
   "settings.webTools.enableSearch": "启用 web_search / web_fetch",
@@ -324,7 +441,8 @@ const zhCN = {
   // ── 设置：出站代理 ──
   "settings.proxy.enable": "启用",
   "settings.proxy.url": "代理 URL",
-  "settings.proxy.urlPlaceholder": "http://127.0.0.1:7890",
+  "settings.proxy.description": "通过代理路由 OpenAI OAuth 和外部提供商请求",
+  "settings.proxy.restartNotice": "将在下次重启网关后生效。",
 
   // ── 设置：Token 节省器 ──
   "settings.tokenSavers.rtkTitle": "RTK 压缩",
@@ -345,6 +463,7 @@ const zhCN = {
   "liveSession.requestLog": "请求日志",
   "liveSession.noRequestsYet": "暂无请求",
   "liveSession.sessionProviders": "会话提供商",
+  "liveSession.avgLatencyMs": "平均延迟（毫秒）",
   "liveSession.cavemanTag": "原始人 ({level})",
 
   // ── Copilot OAuth ──
@@ -364,6 +483,7 @@ const zhCN = {
   "status.notConfigured": "未配置",
   "status.ok": "正常",
   "status.pending": "等待中",
+  "status.comingSoon": "即将推出",
 };
 
 export default zhCN;

@@ -66,6 +66,7 @@ interface TopStatCardProps {
 }
 
 function TopStatCard({ title, icon, color, tagColor, stat, renderName }: TopStatCardProps) {
+  const { t } = useLocale();
   const { token } = theme.useToken();
 
   return (
@@ -107,7 +108,7 @@ function TopStatCard({ title, icon, color, tagColor, stat, renderName }: TopStat
             <Flex align="center" justify="space-between" style={{ marginTop: 4 }}>
               {renderName(stat)}
               <Tag color={tagColor} bordered={false} style={{ margin: 0 }}>
-                {stat.requests} reqs
+                {t("history.requestCount", { count: String(stat.requests) })}
               </Tag>
             </Flex>
           ) : (

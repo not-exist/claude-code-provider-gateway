@@ -10,7 +10,7 @@ interface RequestDetailsProps {
 }
 
 export function RequestDetails({ entry: r }: RequestDetailsProps) {
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   const { token } = theme.useToken();
 
   return (
@@ -22,7 +22,7 @@ export function RequestDetails({ entry: r }: RequestDetailsProps) {
       <Descriptions size="small" column={2} bordered>
         <Descriptions.Item label={t("historyDetails.requestId")}>{r.id}</Descriptions.Item>
         <Descriptions.Item label={t("historyDetails.timestamp")}>
-          {new Date(r.timestamp).toLocaleString()}
+          {new Date(r.timestamp).toLocaleString(locale)}
         </Descriptions.Item>
         <Descriptions.Item label={t("historyDetails.requestedModel")}>{r.requestedModel}</Descriptions.Item>
         <Descriptions.Item label={t("common.provider")}>{r.providerId}</Descriptions.Item>

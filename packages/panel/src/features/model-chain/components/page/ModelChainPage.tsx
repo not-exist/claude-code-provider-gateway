@@ -50,18 +50,18 @@ export default function ModelChainPage() {
         />
         <Flex gap={token.paddingXS} wrap>
           {!economyExists && (
-            <Tooltip title="Create a cost-effective waterfall chain (Fast → Mid-tier → Local) from your available providers.">
+            <Tooltip title={t("modelChain.economyTooltip")}>
               <Button
                 icon={<ThunderboltOutlined />}
                 disabled={!loaded || saving}
                 onClick={() => setEconomyModalOpen(true)}
               >
-                Economy/Local
+                {t("modelChain.economyLocal")}
               </Button>
             </Tooltip>
           )}
           <Button type="primary" icon={<PlusOutlined />} onClick={openNew}>
-            New chain
+            {t("modelChain.addChain")}
           </Button>
         </Flex>
       </Flex>
@@ -99,7 +99,7 @@ export default function ModelChainPage() {
           }}
         >
           <Button type="primary" icon={<PlusOutlined />} onClick={openNew}>
-            Create your first chain
+            {t("modelChain.createFirstChain")}
           </Button>
         </Empty>
       ) : (

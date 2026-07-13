@@ -11,33 +11,29 @@ interface ConfirmModalProps {
   onConfirm: () => void;
 }
 
-const COPY = {
+const CONFIRM_COPY = {
   "replace-key": {
-    title: "Replace API key?",
-    text: (label: string) =>
-      `An API key is already configured for ${label}. Saving a new one will overwrite it permanently.`,
-    okText: "Replace",
+    title: "confirmModal.replaceKeyTitle",
+    text: "confirmModal.replaceKeyText",
+    okText: "confirmModal.replace",
     danger: false,
   },
   "remove-key": {
-    title: "Remove API key?",
-    text: (label: string) =>
-      `The API key for ${label} will be permanently removed. The provider will stop working until a new key is added.`,
-    okText: "Remove",
+    title: "confirmModal.removeKeyTitle",
+    text: "confirmModal.removeKeyText",
+    okText: "common.remove",
     danger: true,
   },
   "change-url": {
-    title: "Change Base URL?",
-    text: (label: string) =>
-      `Update the Base URL for ${label}? Make sure the new endpoint is reachable.`,
-    okText: "Update",
+    title: "confirmModal.changeBaseUrlTitle",
+    text: "confirmModal.changeBaseUrlText",
+    okText: "confirmModal.update",
     danger: false,
   },
   "delete-provider": {
-    title: "Delete custom provider?",
-    text: (label: string) =>
-      `${label} will be permanently removed, including its API key, routing rules, and logo.`,
-    okText: "Delete",
+    title: "confirmModal.deleteProviderTitle",
+    text: "confirmModal.deleteProviderText",
+    okText: "common.delete",
     danger: true,
   },
 } as const;
@@ -47,25 +43,25 @@ export function ConfirmModal({ action, providers, onCancel, onConfirm }: Confirm
 
   if (!action) return null;
   const label = providers.find((p) => p.id === action.providerId)?.label ?? action.providerId;
-  const copy = COPY[action.kind];
+  const copy = CONFIRM_COPY[action.kind];
 
   return (
     <Modal
       centered
       open
-      title={copy.title}
+      title={t(copy.title)}
       onCancel={onCancel}
       footer={[
         <Button key="cancel" onClick={onCancel}>
           {t("confirmModal.cancel")}
         </Button>,
         <Button key="ok" type="primary" danger={copy.danger} onClick={onConfirm} autoFocus>
-          {copy.okText}
+          {t(copy.okText)}
         </Button>,
       ]}
       width={420}
     >
-      <Text type="secondary">{copy.text(label)}</Text>
+      <Text type="secondary">{t(copy.text, { provider: label })}</Text>
     </Modal>
   );
 }

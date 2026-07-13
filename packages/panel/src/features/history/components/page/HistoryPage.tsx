@@ -69,15 +69,15 @@ export default function HistoryPage() {
       try {
         const result = await page.exportSession(session);
         if (result.target === "desktop") {
-          message.success(`Session JSON saved to ${result.path}`);
+          message.success(t("history.exportedSessionDesktop", { path: result.path }));
         } else {
-          message.success(`Downloaded ${result.fileName}`);
+          message.success(t("history.exportedSessionDownload", { fileName: result.fileName }));
         }
       } catch (err) {
         message.error(err instanceof Error ? err.message : "Failed to export session JSON");
       }
     },
-    [message, page],
+    [message, page, t],
   );
 
   return (

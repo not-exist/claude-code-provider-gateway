@@ -16,6 +16,7 @@ export function WebToolsCard({ value, onChange }: WebToolsCardProps) {
   return (
     <Flex vertical gap={token.padding}>
       <ToggleRow
+        labelId="web-tools-enable-search-label"
         title={t("settings.webTools.enableSearch")}
         description={t("settings.webTools.enableSearchDesc")}
         checked={value.enabled}
@@ -25,6 +26,7 @@ export function WebToolsCard({ value, onChange }: WebToolsCardProps) {
       <Divider style={{ margin: 0, borderColor: token.colorBorderSecondary }} />
 
       <ToggleRow
+        labelId="web-tools-allow-private-networks-label"
         title={t("settings.webTools.allowPrivate")}
         description={t("settings.webTools.allowPrivateDesc")}
         checked={value.allowPrivateNetworks}
@@ -36,6 +38,7 @@ export function WebToolsCard({ value, onChange }: WebToolsCardProps) {
 }
 
 interface ToggleRowProps {
+  labelId: string;
   title: string;
   description: string;
   checked: boolean;
@@ -43,8 +46,7 @@ interface ToggleRowProps {
   onChange: (value: boolean) => void;
 }
 
-function ToggleRow({ title, description, checked, disabled = false, onChange }: ToggleRowProps) {
-  const labelId = `web-tools-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+function ToggleRow({ labelId, title, description, checked, disabled = false, onChange }: ToggleRowProps) {
 
   return (
     <Flex justify="space-between" align="center" gap={16}>

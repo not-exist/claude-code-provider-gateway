@@ -93,6 +93,23 @@ const en = {
   "dashboard.providerRequests": "requests",
   "dashboard.providerErrors": "errors",
   "dashboard.none": "None",
+  "dashboard.logLines": "{count} lines",
+  "dashboard.resume": "Resume",
+  "dashboard.pause": "Pause",
+  "dashboard.waitingForLogActivity": "Waiting for log activity…",
+  "dashboard.noHistory": "NO HISTORY",
+  "dashboard.errorRate": "{rate}% ERRORS",
+  "dashboard.avgLatency": "Avg Latency",
+  "dashboard.lastActive": "Last active: {time}",
+  "dashboard.uptime": "Uptime",
+  "dashboard.topModel": "Top Model",
+  "dashboard.daemonPid": "Daemon PID",
+  "dashboard.quickLaunchUnavailable": "Quick Launch unavailable:",
+  "dashboard.noProvidersEnabledHint": "No providers enabled yet - enable one in the Providers tab",
+  "dashboard.quickLaunchHint": "Run Claude Code with a provider or Model Chain shortcut:",
+  "dashboard.modelChains": "Model Chains",
+  "dashboard.copyLaunchItem": "Copy {label}",
+  "dashboard.chain": "Chain",
 
   // ── Shell Setup ──
   "shell.installActions": "Install Actions",
@@ -122,6 +139,11 @@ const en = {
   "providers.oauthProviders": "OAuth Providers",
   "providers.apiKeyProviders": "API Key Providers",
   "providers.customProviders": "Custom Providers",
+  "providers.configure": "Configure",
+  "providers.addFavorite": "Add to favorites",
+  "providers.removeFavorite": "Remove from favorites",
+  "providers.customProvidersEmpty":
+    "No custom providers. Use the tab actions above to add OpenAI or Anthropic compatible endpoints.",
 
   // ── Provider Config ──
   "providerConfig.apiKeySection": "API Key",
@@ -150,6 +172,8 @@ const en = {
   "providerConfig.testConnection": "Test Connection",
   "providerConfig.testing": "Testing…",
   "providerConfig.save": "Save",
+  "providerConfig.configuration": "Configuration",
+  "providerConfig.getApiKey": "Get API Key",
 
   // ── Add Custom Provider ──
   "addCustomProvider.title": "Add Custom Provider",
@@ -175,6 +199,20 @@ const en = {
   "confirmModal.enable": "Enable",
   "confirmModal.disable": "Disable",
   "confirmModal.cancel": "Cancel",
+  "confirmModal.replaceKeyTitle": "Replace API key?",
+  "confirmModal.replaceKeyText":
+    "An API key is already configured for {provider}. Saving a new one will overwrite it permanently.",
+  "confirmModal.replace": "Replace",
+  "confirmModal.removeKeyTitle": "Remove API key?",
+  "confirmModal.removeKeyText":
+    "The API key for {provider} will be permanently removed. The provider will stop working until a new key is added.",
+  "confirmModal.changeBaseUrlTitle": "Change Base URL?",
+  "confirmModal.changeBaseUrlText":
+    "Update the Base URL for {provider}? Make sure the new endpoint is reachable.",
+  "confirmModal.update": "Update",
+  "confirmModal.deleteProviderTitle": "Delete custom provider?",
+  "confirmModal.deleteProviderText":
+    "{provider} will be permanently removed, including its API key, routing rules, and logo.",
 
   // ── Routing ──
   "routing.title": "Routing",
@@ -220,6 +258,7 @@ const en = {
   "modelChain.totalStreamTimeout": "Total stream timeout",
   "modelChain.addModel": "Add Model",
   "modelChain.addAtLeastOne": "Add at least one model",
+  "modelChain.modelRemoved": "Model removed",
   "modelChain.providerPlaceholder": "Provider",
   "modelChain.modelPlaceholder": "Model",
   "modelChain.dragToReorder": "Drag to reorder",
@@ -231,6 +270,36 @@ const en = {
   "modelChain.economyLocalLabel": "Local / last-resort",
   "modelChain.economyLocalPlaceholder": "Skip this slot",
   "modelChain.createEconomyPreset": "Create Economy/Local preset",
+  "modelChain.commandCopied": "Command copied to clipboard",
+  "modelChain.saveChain": "Save chain",
+  "modelChain.slugTooltip": "Letters, numbers, dash, underscore",
+  "modelChain.waterfallDescription":
+    "Starts with primary model. Falls through on failure.",
+  "modelChain.roundRobinDescription":
+    "Picks at random on each request, distributing load.",
+  "modelChain.waterfallAttemptsHint":
+    "Number of times the primary model is tried before falling through to the next.",
+  "modelChain.roundRobinAttemptsHint":
+    "Number of times the initially selected model is tried; later fallback picks get one attempt each.",
+  "modelChain.advancedSettings": "Advanced settings",
+  "modelChain.advancedSettingsDescription":
+    "Fallback timing for this chain. Leave empty to use the resilient defaults.",
+  "modelChain.requestTimeoutTooltip":
+    "Default {seconds}s. Time allowed for a provider to return response headers before this chain tries the next model.",
+  "modelChain.firstTokenTimeoutTooltip":
+    "Default {seconds}s. Time allowed for useful Anthropic content before any answer is shown; if it expires, the next model is tried.",
+  "modelChain.totalStreamTimeoutTooltip":
+    "Default {seconds}s. Maximum time for one chain attempt; increase for large contexts or slow local models.",
+  "modelChain.chainOrder": "Chain order",
+  "modelChain.addAtLeastTwo": "Add at least 2 models",
+  "modelChain.waterfallOrderHint":
+    "Drag to reorder · tried top-to-bottom, falls through on failure",
+  "modelChain.roundRobinOrderHint":
+    "Order doesn't matter · fallbacks get 1 attempt each",
+  "modelChain.economyTooltip":
+    "Create a cost-effective waterfall chain (Fast → Mid-tier → Local) from your available providers.",
+  "modelChain.economyLocal": "Economy/Local",
+  "modelChain.createFirstChain": "Create your first chain",
 
   // ── OpenAI Gateway ──
   "openaiGateway.title": "OpenAI Gateway",
@@ -248,6 +317,25 @@ const en = {
   "openaiGateway.exampleModel": "Example Model",
   "openaiGateway.availableModels": "Available Models",
   "openaiGateway.modelsCount": "{count} models",
+  "openaiGateway.modelId": "Model ID",
+  "openaiGateway.copyModel": "Copy model {model}",
+  "openaiGateway.provider": "Provider",
+  "openaiGateway.apiKey": "API Key",
+  "openaiGateway.connectionDetails": "Connection Details",
+  "openaiGateway.copyField": "Copy {field}",
+  "openaiGateway.modelExplorer": "Model Explorer",
+  "openaiGateway.clientSetup": "Client Setup",
+  "openaiGateway.compatibleClients": "Compatible Clients",
+  "openaiGateway.compatibleClientsDescription":
+    "Use the base URL above and paste the API key as the bearer token in Cursor or any OpenAI-compatible client.",
+  "openaiGateway.modelSelection": "Model Selection",
+  "openaiGateway.modelSelectionDescriptionBefore":
+    "Pick any model from the explorer. Short IDs like",
+  "openaiGateway.modelSelectionDescriptionAfter": "are supported.",
+  "openaiGateway.listModelsExample": "List models",
+  "openaiGateway.chatCompletionExample": "Chat completion",
+  "openaiGateway.streamingChatExample": "Streaming chat",
+  "openaiGateway.integrationExamples": "Integration Examples",
 
   // ── History ──
   "history.title": "History",
@@ -264,6 +352,28 @@ const en = {
   "history.requests": "Requests",
   "history.tokens": "Tokens",
   "history.sessions": "Sessions",
+  "history.archivedSessions": "Archived Sessions",
+  "history.totalRequests": "Total Requests",
+  "history.autoRefresh": "Auto-refresh every {seconds}s",
+  "history.clearHistory": "Clear history",
+  "history.requestCount": "{count} reqs",
+  "history.started": "Started",
+  "history.ended": "Ended",
+  "history.running": "Running",
+  "history.today": "today",
+  "history.duration": "Duration",
+  "history.mode": "Mode",
+  "history.none": "none",
+  "history.command": "Command",
+  "history.topModel": "Top model",
+  "history.requestedModel": "Requested model",
+  "history.lastRoutedTo": "Last routed to",
+  "history.tokensIn": "Tokens in",
+  "history.avgLatency": "Avg latency",
+  "history.exportSessionAria": "Export session {id} as JSON",
+  "history.deleteSessionAria": "Delete session {id}",
+  "history.exportedSessionDesktop": "Session JSON saved to {path}",
+  "history.exportedSessionDownload": "Downloaded {fileName}",
 
   // ── History Details ──
   "historyDetails.requestId": "ID",
@@ -284,6 +394,12 @@ const en = {
   "historyDetails.providersTable": "Session Providers",
   "historyDetails.requestLog": "Request Log",
   "historyDetails.noRequestsYet": "No requests yet",
+  "historyDetails.time": "Time",
+  "historyDetails.requested": "Requested",
+  "historyDetails.latency": "Latency",
+  "historyDetails.savers": "Savers",
+  "historyDetails.preview": "Preview",
+  "historyDetails.userInput": "User Input",
   "historyDetails.deleteSession": "Delete Session",
   "historyDetails.deleteSessionConfirm": "Delete this session?",
 
@@ -322,6 +438,8 @@ const en = {
   "settings.server.authToken": "Auth Token",
   "settings.server.dockerNotice":
     "Docker publishes this port from docker-compose.yml. Port changes require recreating the container.",
+  "settings.server.proxyPortHelp":
+    "Claude Code points here via ANTHROPIC_BASE_URL",
 
   // ── Settings: Web Tools ──
   "settings.webTools.enableSearch": "Enable web_search / web_fetch",
@@ -334,7 +452,9 @@ const en = {
   // ── Settings: Outbound Proxy ──
   "settings.proxy.enable": "Enable",
   "settings.proxy.url": "Proxy URL",
-  "settings.proxy.urlPlaceholder": "http://127.0.0.1:7890",
+  "settings.proxy.description":
+    "Route OpenAI OAuth and external provider requests through a proxy",
+  "settings.proxy.restartNotice": "Takes effect on next gateway restart.",
 
   // ── Settings: Token Savers ──
   "settings.tokenSavers.rtkTitle": "RTK compression",
@@ -357,6 +477,7 @@ const en = {
   "liveSession.requestLog": "Request Log",
   "liveSession.noRequestsYet": "No requests yet",
   "liveSession.sessionProviders": "Session Providers",
+  "liveSession.avgLatencyMs": "Avg Latency (ms)",
   "liveSession.cavemanTag": "Caveman ({level})",
 
   // ── Copilot OAuth ──
@@ -376,6 +497,7 @@ const en = {
   "status.notConfigured": "Not Configured",
   "status.ok": "OK",
   "status.pending": "Pending",
+  "status.comingSoon": "Coming soon",
 };
 
 export default en;

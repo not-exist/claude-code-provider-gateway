@@ -87,9 +87,9 @@ export default function LiveSessionPage() {
           <Empty
             description={
               <Flex vertical align="center" gap={token.paddingXS}>
-                <Text type="secondary">No active sessions</Text>
+                <Text type="secondary">{t("liveSession.noActiveSessions")}</Text>
                 <Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
-                  Start one or more ccpg terminals to see live sessions here.
+                  {t("liveSession.startTerminals")}
                 </Text>
               </Flex>
             }
@@ -101,7 +101,7 @@ export default function LiveSessionPage() {
             items={[
               {
                 id: "sessions",
-                title: "Sessions",
+                title: t("history.sessions"),
                 value: sessions.length,
                 icon: <ThunderboltOutlined />,
                 color: token.colorPrimary,
@@ -109,7 +109,7 @@ export default function LiveSessionPage() {
               },
               {
                 id: "requests",
-                title: "Requests",
+                title: t("history.requests"),
                 value: totals.requests,
                 icon: <CheckCircleOutlined />,
                 color: token.colorSuccess,
@@ -125,7 +125,7 @@ export default function LiveSessionPage() {
               },
               {
                 id: "latency",
-                title: "Avg Latency (ms)",
+                title: t("liveSession.avgLatencyMs"),
                 value: totals.avgLatencyMs,
                 icon: <ClockCircleOutlined />,
                 color: token.colorWarning,
@@ -181,6 +181,7 @@ function LiveSessionSummary({ session }: { session: Session }) {
 
 function LiveSessionDetails({ session }: { session: Session }) {
   const { token } = theme.useToken();
+  const { t } = useLocale();
   const requestLog = [...(session.requestLog ?? [])].reverse();
   const usedModels = Object.entries(session.modelStats ?? {}).sort(
     ([, a], [, b]) => b.requests - a.requests,
@@ -195,24 +196,18 @@ function LiveSessionDetails({ session }: { session: Session }) {
       <SessionMetadataCards session={session} />
 
       {providerRows.length > 0 && (
-        <Section title="Providers">
-          <ProvidersTable rows={providerRows} title="Session Providers" />
-        </Section>
+        <ProvidersTable rows={providerRows} title={t("liveSession.sessionProviders")} />
       )}
 
-      {usedModels.length > 0 && (
-        <Section title="Models">
-          <ModelsUsedTable rows={usedModels} />
-        </Section>
-      )}
+      {usedModels.length > 0 && <ModelsUsedTable rows={usedModels} />}
 
-      <Section title="Request Log">
+      <Section title={t("liveSession.requestLog")}>
         {requestLog.length > 0 ? (
           <RequestLogTable entries={requestLog} />
         ) : (
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description={<Text type="secondary">No requests yet</Text>}
+            description={<Text type="secondary">{t("liveSession.noRequestsYet")}</Text>}
           />
         )}
       </Section>

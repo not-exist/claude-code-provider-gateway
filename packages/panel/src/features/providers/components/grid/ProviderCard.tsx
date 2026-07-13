@@ -54,7 +54,11 @@ export function ProviderCard({
       }
       role={interactive ? "button" : undefined}
       tabIndex={interactive ? 0 : -1}
-      aria-label={interactive ? `Configure ${p.label}` : `${p.label} — coming soon`}
+      aria-label={
+        interactive
+          ? `${t("providers.configure")} ${p.label}`
+          : `${p.label} — ${t("status.comingSoon")}`
+      }
       aria-disabled={!interactive}
       style={{
         width: "100%",
@@ -103,7 +107,7 @@ export function ProviderCard({
                   color={testResult.ok ? "success" : "error"}
                   style={{ margin: 0, fontSize: 11 }}
                 >
-                  {testResult.ok ? `${testResult.latencyMs}ms` : t("common.error")}
+                  {testResult.ok ? `${testResult.latencyMs}ms` : "Error"}
                 </Tag>
               )}
             </Space>
@@ -126,7 +130,9 @@ export function ProviderCard({
                   e.stopPropagation();
                   onToggleFavorite(p, e);
                 }}
-                aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                aria-label={
+                  isFavorite ? t("providers.removeFavorite") : t("providers.addFavorite")
+                }
               />
             )}
             <Switch
@@ -134,7 +140,7 @@ export function ProviderCard({
               onClick={(_, event) => event.stopPropagation()}
               onChange={() => onToggleEnabled(p.id, p.enabled)}
               size="small"
-              aria-label={`${p.enabled ? "Disable" : "Enable"} ${p.label}`}
+              aria-label={`${t(p.enabled ? "common.disable" : "common.enable")} ${p.label}`}
             />
           </Space>
         )}
@@ -151,7 +157,7 @@ function getProviderStatus(
   const ready = isProviderReady(provider);
 
   if (comingSoon) {
-    return { badge: "processing", label: "Coming soon", ready: false };
+    return { badge: "processing", label: t("status.comingSoon"), ready: false };
   }
 
   if (!provider.enabled) {

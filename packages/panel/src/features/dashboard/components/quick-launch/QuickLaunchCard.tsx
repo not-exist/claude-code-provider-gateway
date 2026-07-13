@@ -71,6 +71,7 @@ function AvailableProviders({
   onCopy: (key: string, value: string) => void;
 }) {
   const { token } = theme.useToken();
+  const { t } = useLocale();
   const providerItems = items.filter((item) => !isChainLaunchItem(item));
   const chainItems = items.filter(isChainLaunchItem);
 
@@ -78,7 +79,11 @@ function AvailableProviders({
     return (
       <Empty
         image={Empty.PRESENTED_IMAGE_SIMPLE}
-        description={`Quick Launch unavailable: ${error.message}`}
+        description={
+          <>
+            {t("dashboard.quickLaunchUnavailable")} {error.message}
+          </>
+        }
         style={{ margin: 0 }}
       />
     );
@@ -88,7 +93,7 @@ function AvailableProviders({
     return (
       <Empty
         image={Empty.PRESENTED_IMAGE_SIMPLE}
-        description="No providers enabled yet - enable one in the Providers tab"
+        description={t("dashboard.noProvidersEnabledHint")}
         style={{ margin: 0 }}
       />
     );
@@ -97,7 +102,7 @@ function AvailableProviders({
   return (
     <Flex vertical gap={token.padding}>
       <Text type="secondary" style={{ fontSize: 14 }}>
-        Run Claude Code with a provider or Model Chain shortcut:
+        {t("dashboard.quickLaunchHint")}
       </Text>
       {providerItems.length > 0 && (
         <Flex wrap gap={token.padding}>
@@ -116,7 +121,7 @@ function AvailableProviders({
           <Divider style={{ margin: `${token.marginXS}px 0 0` }} />
           <Flex vertical gap={token.paddingSM}>
             <Text type="secondary" style={{ fontSize: 12, textTransform: "uppercase" }}>
-              Model Chains
+              {t("dashboard.modelChains")}
             </Text>
             <Flex wrap gap={token.padding}>
               {chainItems.map((item) => (
@@ -153,7 +158,7 @@ function QuickLaunchTag({
   const isChain = isChainLaunchItem(item);
 
   return (
-    <Tooltip title={copied ? t("common.copied") : `Copy ${item.label}`}>
+    <Tooltip title={copied ? t("common.copied") : t("dashboard.copyLaunchItem", { label: item.label })}>
       <button
         type="button"
         onClick={() => onCopy(item.id, item.cmd)}
@@ -192,7 +197,7 @@ function QuickLaunchTag({
               lineHeight: "18px",
             }}
           >
-            Chain
+            {t("dashboard.chain")}
           </Text>
         )}
         <CopyOutlined style={{ color: copied ? token.colorSuccess : token.colorTextTertiary }} />

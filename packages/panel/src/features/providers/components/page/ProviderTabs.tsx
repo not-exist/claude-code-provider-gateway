@@ -94,8 +94,7 @@ function CustomProvidersSection({
             textAlign: "center",
           }}
         >
-          No custom providers. Use the tab actions above to add OpenAI or Anthropic compatible
-          endpoints.
+          {t("providers.customProvidersEmpty")}
         </div>
       ) : (
         <Row gutter={[token.paddingMD, token.paddingMD]} align="stretch">

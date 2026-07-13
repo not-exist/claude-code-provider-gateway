@@ -12,22 +12,27 @@ interface SessionMetadataCardsProps {
 }
 
 export function SessionMetadataCards({ session }: SessionMetadataCardsProps) {
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   const { token } = theme.useToken();
 
   const items = [
-    { label: "Started", value: formatDate(session.startedAt) },
     {
-      label: "Ended",
-      value: session.endedAt ? formatDate(session.endedAt) : "Running",
+      label: t("history.started"),
+      value: formatDate(session.startedAt, locale, t("history.today")),
     },
-    { label: "Duration", value: formatUptime(session.durationMs) },
-    { label: "Mode", value: session.modelMode },
+    {
+      label: t("history.ended"),
+      value: session.endedAt
+        ? formatDate(session.endedAt, locale, t("history.today"))
+        : t("history.running"),
+    },
+    { label: t("history.duration"), value: formatUptime(session.durationMs) },
+    { label: t("history.mode"), value: session.modelMode },
     {
       label: t("liveSession.providers"),
       value:
         session.modelMode === "all"
-          ? session.enabledProviders.map(providerLabel).join(", ") || "none"
+          ? session.enabledProviders.map(providerLabel).join(", ") || t("history.none")
           : providerLabel(session.activeProvider),
     },
   ];

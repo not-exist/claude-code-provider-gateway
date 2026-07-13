@@ -16,7 +16,7 @@ export function useModelStatsColumns(): TableColumnsType<ModelStatsRow> {
 
   return [
     {
-      title: "Requested model",
+      title: t("history.requestedModel"),
       key: "m",
       ellipsis: true,
       render: ([model]) => (
@@ -32,7 +32,7 @@ export function useModelStatsColumns(): TableColumnsType<ModelStatsRow> {
       ),
     },
     {
-      title: "Last routed to",
+      title: t("history.lastRoutedTo"),
       key: "r",
       ellipsis: true,
       render: ([, stat]) => <LastProviderModel stat={stat} />,
@@ -45,14 +45,14 @@ export function useModelStatsColumns(): TableColumnsType<ModelStatsRow> {
       render: ([, stat]) => <CountTag color="blue" value={stat.requests} />,
     },
     {
-      title: "Tokens in",
+      title: t("history.tokensIn"),
       key: "tok",
       width: 110,
       align: "right",
       render: ([, stat]) => <MutedMonoText value={formatNumber(stat.inputTokens)} />,
     },
     {
-      title: "Avg latency",
+      title: t("history.avgLatency"),
       key: "lat",
       width: 100,
       align: "right",

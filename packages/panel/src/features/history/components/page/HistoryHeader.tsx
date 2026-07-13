@@ -29,7 +29,7 @@ export function HistoryHeader({
           description={t("history.description")}
         />
         <Text type="secondary" style={{ fontSize: 12 }}>
-          Auto-refresh every {pollSeconds}s
+          {t("history.autoRefresh", { seconds: String(pollSeconds) })}
         </Text>
       </Flex>
       <Space>
@@ -43,7 +43,7 @@ export function HistoryHeader({
           disabled={!canClear}
           onClick={onRequestClear}
         >
-          Clear history
+          {t("history.clearHistory")}
         </Button>
       </Space>
     </Flex>

@@ -36,7 +36,7 @@ export function ProviderStatCard({ provider: p }: ProviderStatCardProps) {
           <Text strong>{p.label}</Text>
           {p.requests === 0 && (
             <Text type="secondary" style={{ marginLeft: "auto", fontSize: 12 }}>
-              NO HISTORY
+              {t("dashboard.noHistory")}
             </Text>
           )}
           {view.hasErrors && (
@@ -51,7 +51,7 @@ export function ProviderStatCard({ provider: p }: ProviderStatCardProps) {
                 fontWeight: 500,
               }}
             >
-              {view.errorRate}% ERRORS
+              {t("dashboard.errorRate", { rate: String(view.errorRate) })}
             </div>
           )}
         </Flex>
@@ -74,7 +74,7 @@ export function ProviderStatCard({ provider: p }: ProviderStatCardProps) {
             type="secondary"
             style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 0.5 }}
           >
-            Avg Latency
+            {t("dashboard.avgLatency")}
           </Text>
           <Text style={{ fontSize: 20, fontWeight: 600, fontFamily: "monospace" }}>
             {view.averageLatency}
@@ -84,7 +84,7 @@ export function ProviderStatCard({ provider: p }: ProviderStatCardProps) {
 
       <Flex gap={token.paddingXS} style={{ marginTop: token.padding }}>
         <Text type="secondary" style={{ fontSize: 12 }}>
-          Last active: {view.lastActivity}
+          {t("dashboard.lastActive", { time: view.lastActivity })}
         </Text>
       </Flex>
     </Card>

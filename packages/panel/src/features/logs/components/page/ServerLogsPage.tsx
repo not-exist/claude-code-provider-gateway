@@ -48,7 +48,7 @@ export default function ServerLogsPage() {
     } catch (err) {
       message.error(err instanceof Error ? err.message : t("logs.failedToSave"));
     }
-  }, [downloadLogs, message]);
+  }, [downloadLogs, message, t]);
 
   return (
     <Flex vertical gap={token.paddingLG} style={{ height: pageHeight }}>

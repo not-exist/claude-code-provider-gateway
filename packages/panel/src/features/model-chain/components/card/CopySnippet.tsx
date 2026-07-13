@@ -19,7 +19,7 @@ export function CopySnippet({ snippet }: { snippet: string }) {
         onClick={(e) => {
           e.stopPropagation();
           copy(snippet, snippet);
-          message.success("Command copied to clipboard");
+          message.success(t("modelChain.commandCopied"));
         }}
         style={{
           cursor: "pointer",

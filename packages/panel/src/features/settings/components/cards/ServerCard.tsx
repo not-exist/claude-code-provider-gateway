@@ -36,7 +36,7 @@ export function ServerCard({ form, containerRuntime = false }: ServerCardProps) 
       <Form.Item
         name="proxyPort"
         label={t("settings.server.proxyPort")}
-        help="Claude Code points here via ANTHROPIC_BASE_URL"
+        help={t("settings.server.proxyPortHelp")}
         style={{ marginBottom: 0 }}
       >
         <InputNumber style={MONO_INPUT} min={1} max={65535} />
